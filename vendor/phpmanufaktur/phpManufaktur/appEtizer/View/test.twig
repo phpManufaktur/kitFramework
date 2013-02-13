@@ -1,0 +1,15 @@
+{# empty Twig template #}
+<!DOCTYPE html> 
+<html lang="en"> 
+  <head> 
+    <meta charset="utf-8" /> 
+    <title>{{ title }}</title>  
+    <link rel="stylesheet" href="{{ css_url }}" media="all" type="text/css" />  
+  </head>  
+  <body> 
+    <div class="test">
+      <h1>Welcome</h1>
+      <p>{{ 'How do you do, <b>%name%</b>?'|trans({'%name%':'Ralf'})|raw }}</p>
+    </div>
+  </body> 
+</html>
