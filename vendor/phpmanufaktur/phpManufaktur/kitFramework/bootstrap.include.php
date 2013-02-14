@@ -10,6 +10,7 @@
  */
 
 use phpManufaktur\kitFramework\kitFramework;
+use phpManufaktur\kitFramework\Control\Utils;
 
 // add the path to the kitFramework Twig templates
 $app['twig.loader.filesystem']->addPath(
@@ -26,7 +27,7 @@ try {
 		if (in_array($lang_file, $ignore)) continue;
 		$lang_name = pathinfo($locale_path.'/'.$lang_file, PATHINFO_FILENAME);
 		// add the locale resource file
-		$app['translator']->addResource('array', $app['toolbox']->returnArrayFromFile($locale_path.'/'.$lang_file), $lang_name);		
+		$app['translator']->addResource('array', $frameworkUtils->returnArrayFromFile($locale_path.'/'.$lang_file), $lang_name);		
 	}
 }
 catch (\Exception $e) {

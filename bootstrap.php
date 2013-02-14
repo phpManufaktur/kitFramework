@@ -11,7 +11,6 @@
 
 require_once __DIR__.'/vendor/autoload.php';
 
-use phpManufaktur\Toolbox\Control\Toolbox;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Debug\ErrorHandler;
@@ -19,6 +18,7 @@ use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
 use Symfony\Component\Locale;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Translation\Loader\ArrayLoader;
+use phpManufaktur\kitFramework\Control\Utils;
 
 // set the error handling
 ini_set('display_errors', 1);
@@ -71,11 +71,6 @@ $app->register(new Silex\Provider\SessionServiceProvider, array(
 ));
 $app['monolog']->addDebug('SessionServiceProvider registered.');
 
-// register the phpManufaktur Toolbox
-$app['toolbox'] = function () {
-    return new Toolbox();
-};
-
 // register Twig
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
 		'twig.path' => array(
@@ -89,7 +84,8 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 $app['monolog']->addDebug('TwigServiceProvider registered.');
 
 // register the Translator
-$locale = $app['toolbox']->getLanguageFromBrowser(array('de','en'), 'de'); 
+$frameworkUtils = new Utils($app);
+$locale = $frameworkUtils->getLanguageFromBrowser(array('de','en'), 'de'); 
 
 $app->register(new Silex\Provider\TranslationServiceProvider(), array(
 		'locale' => $locale,
