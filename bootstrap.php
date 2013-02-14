@@ -101,15 +101,21 @@ $app['translator'] = $app->share($app->extend('translator', function($translator
 	return $translator;
 }));
 
-$app['monolog']->addDebug('Translator Service for YAML files registered.');
+$app['monolog']->addDebug('Translator Service registered. Added ArrayLoader to the Translator');
 
-// loop through the /phpManufaktur path and include bootstrap extensions
-$scan_path = __DIR__.'/vendor/phpmanufaktur/phpManufaktur';
-$entries = scandir($scan_path);
-foreach ($entries as $entry) {
-	if (is_dir($scan_path.'/'.$entry)) {
-		if (file_exists($scan_path.'/'.$entry.'/bootstrap.include.php')) {
-			include_once $scan_path.'/'.$entry.'/bootstrap.include.php';
+$scan_paths = array(
+		__DIR__.'/vendor/phpmanufaktur/phpManufaktur',
+		__DIR__.'/vendor/thirdparty/thirdParty'
+		);
+// loop through /phpManufaktur and /thirdParty to include bootstrap extensions
+foreach ($scan_paths as $scan_path) {
+	$entries = scandir($scan_path);
+	foreach ($entries as $entry) {
+		if (is_dir($scan_path.'/'.$entry)) {
+			if (file_exists($scan_path.'/'.$entry.'/bootstrap.include.php')) {
+				// include the bootstrap extension
+				include_once $scan_path.'/'.$entry.'/bootstrap.include.php';
+			}
 		}
 	}
 }
