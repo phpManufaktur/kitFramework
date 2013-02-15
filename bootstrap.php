@@ -28,14 +28,66 @@ if ('cli' !== php_sapi_name()) {
 	ExceptionHandler::register();
 }
 
+/**
+ * Read the specified configuration file in JSON format
+ * 
+ * @param string $file
+ * @throws \Exception
+ * @return array configuration items
+ */
+function readConfiguration($file) {
+	if (file_exists($file)) {
+		if (null == ($config = (array) json_decode(file_get_contents($file, true)))) {
+			$code = json_last_error();
+			// get JSON error message from last error code
+			switch ($code):
+			case JSON_ERROR_NONE:
+				$error = 'No errors'; break;
+			case JSON_ERROR_DEPTH:
+				$error = 'Maximum stack depth exceeded'; break;
+			case JSON_ERROR_STATE_MISMATCH:
+				$error = 'Underflow or the modes mismatch'; break;
+			case JSON_ERROR_CTRL_CHAR:
+				$error = 'Unexpected control character found'; break;
+			case JSON_ERROR_SYNTAX:
+				$error = 'Syntax error, malformed JSON'; break;
+			case JSON_ERROR_UTF8:
+				$error = 'Malformed UTF-8 characters, possibly incorrectly encoded'; break;
+			default:
+				$error = 'Unknown error'; break;
+			endswitch;
+			// throw Exception
+			throw new \Exception(sprintf('Error decoding JSON file %s, returned error code: %d - %s',	$file, $code, $error));
+		}
+	}
+	else {
+		throw new \Exception(sprintf('Missing the configuration file: %s!', $file));
+	}
+	// return the configuration array
+	return $config;
+} // readConfiguration()
+
+
 // init application
 $app = new Silex\Application();
+	
+try {
+	// check for the framework configuration file
+	$framework_config = readConfiguration(__DIR__.'/config/framework.json');
+	// framework constants
+	define('FRAMEWORK_URL', $framework_config['FRAMEWORK_URL']);
+	define('FRAMEWORK_PATH', $framework_config['FRAMEWORK_PATH']);
+	define('FRAMEWORK_TEMP_PATH', isset($framework_config['FRAMEWORK_TEMP_PATH']) ? 
+		$framework_config['FRAMEWORK_TEMP_PATH'] : FRAMEWORK_PATH.'/temp');
+	define('MANUFAKTUR_PATH', FRAMEWORK_PATH.'/vendor/phpmanufaktur/phpManufaktur');
+	define('THIRDPARTY_PATH', FRAMEWORK_PATH.'/vendor/thirdparty/thirdParty');
+}
+catch (\Exception $e) {
+	throw new \Exception('Problem setting the framework constants!', 0, $e);	
+}
 
 // debug mode
-$app['debug'] = true;
-
-// save the base path
-$app['base_path'] = __DIR__;
+$app['debug'] = (isset($framework_config['debug'])) ? $framework_config['debug'] : true;
 
 // get the filesystem into the application
 $app['filesystem'] = function () {
@@ -43,20 +95,20 @@ $app['filesystem'] = function () {
 };
 
 $directories = array(
-		__DIR__.'/temp/logfile',
-		__DIR__.'/temp/cache',
-		__DIR__.'/temp/session'
+		FRAMEWORK_PATH.'/logfile',
+		FRAMEWORK_PATH.'/temp/cache',
+		FRAMEWORK_PATH.'/temp/session'
 		);
 
 // check the needed temporary directories and create them if needed
 if (!$app['filesystem']->exists($directories)) 
 	$app['filesystem']->mkdir($directories);
 
-$max_log_size = 2*1024*1024; // 2 MB
-$log_file = __DIR__.'/temp/logfile/kit2.log';
+$max_log_size = (isset($framework_config['logfile_max_size'])) ? $framework_config['logfile_max_size'] : 2*1024*1024; // 2 MB
+$log_file = FRAMEWORK_PATH.'/logfile/kit2.log';
 if ($app['filesystem']->exists($log_file) && (filesize($log_file) > $max_log_size)) {
-	$app['filesystem']->remove(__DIR__.'/temp/logfile/kit2.log.bak');
-	$app['filesystem']->rename($log_file, __DIR__.'/temp/logfile/kit2.log.bak');
+	$app['filesystem']->remove(FRAMEWORK_PATH.'/logfile/kit2.log.bak');
+	$app['filesystem']->rename($log_file, FRAMEWORK_PATH.'/logfile/kit2.log.bak');
 }
 
 // register monolog
@@ -64,6 +116,46 @@ $app->register(new Silex\Provider\MonologServiceProvider(), array(
     'monolog.logfile' => $log_file
 ));
 $app['monolog']->addDebug('MonologServiceProvider registered.');
+
+try {
+	// read the CMS configuration
+	$cms_config = readConfiguration(FRAMEWORK_PATH.'/config/cms.json');
+	// setting the CMS constants
+	define('CMS_PATH', $cms_config['CMS_PATH']);
+	define('CMS_URL', $cms_config['CMS_URL']);
+	define('CMS_MEDIA_PATH', $cms_config['CMS_MEDIA_PATH']);
+	define('CMS_MEDIA_URL', $cms_config['CMS_MEDIA_URL']);
+	define('CMS_TEMP_PATH', $cms_config['CMS_TEMP_PATH']);
+	define('CMS_TEMP_URL', $cms_config['CMS_TEMP_URL']);
+	define('CMS_ADMIN_PATH', $cms_config['CMS_ADMIN_PATH']);
+	define('CMS_ADMIN_URL', $cms_config['CMS_ADMIN_URL']);
+	define('CMS_TYPE', $cms_config['CMS_TYPE']);
+	define('CMS_VERSION', $cms_config['CMS_VERSION']);
+} catch (\Exception $e) {
+	throw new \Exception('Problem setting the CMS constants!', 0, $e); 
+}
+$app['monolog']->addDebug('CMS constants defined.');
+
+try {
+	// read the doctrine configuration
+	$doctrine_config = readConfiguration(FRAMEWORK_PATH.'/config/doctrine.cms.json');
+	define('CMS_TABLE_PREFIX', $doctrine_config['TABLE_PREFIX']);
+	define('FRAMEWORK_TABLE_PREFIX', $doctrine_config['TABLE_PREFIX'].'kit2_');
+	$app->register(new Silex\Provider\DoctrineServiceProvider(), array(
+			'db.options' => array(
+					'driver'   => 'pdo_mysql',
+					'dbname' => $doctrine_config['DB_NAME'],
+					'user' => $doctrine_config['DB_USERNAME'],
+					'password' => $doctrine_config['DB_PASSWORD'],
+					'host' => $doctrine_config['DB_HOST'],
+					'port' => $doctrine_config['DB_PORT']
+			),
+	));
+}
+catch (\Exception $e) {
+	throw new \Exception('Problem initilizing Doctrine!', 0, $e);
+}
+$app['monolog']->addDebug('DoctrineServiceProvider registered');
 
 // register the session handler
 $app->register(new Silex\Provider\SessionServiceProvider, array(
@@ -74,10 +166,10 @@ $app['monolog']->addDebug('SessionServiceProvider registered.');
 // register Twig
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
 		'twig.path' => array(
-				__DIR__.'/vendor/phpmanufaktur/phpManufaktur/'
+				FRAMEWORK_PATH.'/vendor/phpmanufaktur/phpManufaktur/'
 				),
 		'twig.options' => array(
-				'cache' => $app['debug'] ? false : __DIR__.'/temp/cache/',
+				'cache' => $app['debug'] ? false : FRAMEWORK_PATH.'/temp/cache/',
 				'strict_variables' => $app['debug'] ? true : false
 				)
 ));
@@ -100,8 +192,8 @@ $app['translator'] = $app->share($app->extend('translator', function($translator
 $app['monolog']->addDebug('Translator Service registered. Added ArrayLoader to the Translator');
 
 $scan_paths = array(
-		__DIR__.'/vendor/phpmanufaktur/phpManufaktur',
-		__DIR__.'/vendor/thirdparty/thirdParty'
+		MANUFAKTUR_PATH,
+		THIRDPARTY_PATH
 		);
 // loop through /phpManufaktur and /thirdParty to include bootstrap extensions
 foreach ($scan_paths as $scan_path) {
