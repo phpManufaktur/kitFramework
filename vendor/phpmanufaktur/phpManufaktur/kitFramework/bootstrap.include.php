@@ -11,15 +11,16 @@
 
 use phpManufaktur\kitFramework\kitFramework;
 use phpManufaktur\kitFramework\Control\Utils;
+use Silex\Application;
 
 // add the path to the kitFramework Twig templates
 $app['twig.loader.filesystem']->addPath(
-		$app['base_path'].'/vendor/phpmanufaktur/phpManufaktur/kitFramework/View/Templates'
+		MANUFAKTUR_PATH.'/kitFramework/View/Templates'
 );
 
 // scan the /Locale directory and add all available languages
 try {
-	$locale_path = $app['base_path'].'/vendor/phpmanufaktur/phpManufaktur/kitFramework/Data/Locale';
+	$locale_path = MANUFAKTUR_PATH.'/kitFramework/Data/Locale';
 	if (false === ($lang_files = scandir($locale_path)))
 		throw new \Exception(sprintf("Can't read the /Locale directory %s for kitFramework!", $locale_path));
 	$ignore = array('.', '..', 'index.php');
@@ -39,3 +40,12 @@ $app->get('/', function () use ($app) {
 	$framework = new kitFramework($app);
 	return $framework->exec();
 });
+
+// catch accesses to the /config directory
+$app->get('/config/', function() use ($app) {
+	$framework = new kitFramework($app);
+	return $framework->exitAccessDenied();
+});
+$app->get('/config/{any}', function() use ($app) { return $app->redirect(FRAMEWORK_URL.'/config'); });
+$app->get('/config/{any}.{ext}', function() use ($app) { return $app->redirect(FRAMEWORK_URL.'/config'); });
+$app->get('/config/{any}/{other}', function() use ($app) { return $app->redirect(FRAMEWORK_URL.'/config'); });
