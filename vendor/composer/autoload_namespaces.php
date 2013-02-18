@@ -36,5 +36,5 @@ return array(
     'Doctrine\\DBAL' => $vendorDir . '/doctrine/dbal/lib/',
     'Doctrine\\Common' => $vendorDir . '/doctrine/common/lib/',
     'phpManufaktur' => $vendorDir . '/phpmanufaktur/',
-    'thirdparty' => $vendorDir . '/thirdparty/',
+    'thirdParty' => $vendorDir . '/thirdparty/',
 );
