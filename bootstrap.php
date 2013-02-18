@@ -37,7 +37,7 @@ if ('cli' !== php_sapi_name()) {
  */
 function readConfiguration($file) {
 	if (file_exists($file)) {
-		if (null == ($config = (array) json_decode(file_get_contents($file, true)))) {
+		if (null == ($config = json_decode(file_get_contents($file), true))) {
 			$code = json_last_error();
 			// get JSON error message from last error code
 			switch ($code):
@@ -175,14 +175,28 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 ));
 $app['monolog']->addDebug('TwigServiceProvider registered.');
 
-// register the Translator
-$frameworkUtils = new Utils($app);
-$locale = $frameworkUtils->getLanguageFromBrowser(array('de','en'), 'de'); 
+// quick and dirty ... to be improved!
+if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+	$langs = array();
+	// break up string into pieces (languages and q factors)
+	preg_match_all('/([a-z]{1,8}(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $lang_parse);
+	if (count($lang_parse[1]) > 0) {
+		foreach ($lang_parse[1] as $lang) {
+			if (false === (strpos($lang, '-'))) $locale = $lang;
+			break;
+		}
+	}
+}
+else {
+	$locale = 'en';
+}
 
+// register the Translator
 $app->register(new Silex\Provider\TranslationServiceProvider(), array(
 		'locale' => $locale,
 		'locale_fallback' => 'en',
 ));
+
 
 $app['translator'] = $app->share($app->extend('translator', function($translator, $app) {
 	$translator->addLoader('array', new ArrayLoader());	
