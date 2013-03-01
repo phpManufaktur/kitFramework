@@ -1,0 +1,11 @@
+{% include '@phpManufaktur/Basic/View/basic.body.header.twig' %}
+<form action="{{ path('admin_login_check') }}" method="post">
+	{% if error|length > 0 %}
+    <div class="error">{{ error|trans }}</div>
+  {% endif %}
+
+    <input type="text" name="_username" value="{{ last_username }}" />
+    <input type="password" name="_password" value="" />
+    <input type="submit" />
+</form>
+{% include '@phpManufaktur/Basic/View/basic.body.footer.twig' %}
