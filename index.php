@@ -1,7 +1,7 @@
 <?php
 
 /**
- * kit2
+ * kitFramework
  *
  * @author Team phpManufaktur <team@phpmanufaktur.de>
  * @link https://addons.phpmanufaktur.de/extendedWYSIWYG

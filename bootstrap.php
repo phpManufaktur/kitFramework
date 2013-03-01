@@ -1,7 +1,7 @@
 <?php
 
 /**
- * kit2
+ * kitFramework
  *
  * @author Team phpManufaktur <team@phpmanufaktur.de>
  * @link https://addons.phpmanufaktur.de/extendedWYSIWYG
@@ -18,7 +18,10 @@ use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
 use Symfony\Component\Locale;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Translation\Loader\ArrayLoader;
-use phpManufaktur\kitFramework\Control\Utils;
+use Silex\Provider\FormServiceProvider;
+use phpManufaktur\Basic\Control\UserProvider;
+use phpManufaktur\Basic\Control\manufakturPasswordEncoder;
+use phpManufaktur;
 
 // set the error handling
 ini_set('display_errors', 1);
@@ -30,7 +33,7 @@ if ('cli' !== php_sapi_name()) {
 
 /**
  * Read the specified configuration file in JSON format
- * 
+ *
  * @param string $file
  * @throws \Exception
  * @return array configuration items
@@ -70,24 +73,30 @@ function readConfiguration($file) {
 
 // init application
 $app = new Silex\Application();
-	
+
 try {
 	// check for the framework configuration file
 	$framework_config = readConfiguration(__DIR__.'/config/framework.json');
 	// framework constants
 	define('FRAMEWORK_URL', $framework_config['FRAMEWORK_URL']);
 	define('FRAMEWORK_PATH', $framework_config['FRAMEWORK_PATH']);
-	define('FRAMEWORK_TEMP_PATH', isset($framework_config['FRAMEWORK_TEMP_PATH']) ? 
+	define('FRAMEWORK_TEMP_PATH', isset($framework_config['FRAMEWORK_TEMP_PATH']) ?
 		$framework_config['FRAMEWORK_TEMP_PATH'] : FRAMEWORK_PATH.'/temp');
 	define('MANUFAKTUR_PATH', FRAMEWORK_PATH.'/vendor/phpmanufaktur/phpManufaktur');
+	define('MANUFAKTUR_URL', FRAMEWORK_URL.'/vendor/phpmanufaktur/phpManufaktur');
 	define('THIRDPARTY_PATH', FRAMEWORK_PATH.'/vendor/thirdparty/thirdParty');
+	define('THIRDPARTY_URL', FRAMEWORK_URL.'/vendor/thirdparty/thirdParty');
+	define('CONNECT_CMS_USERS', isset($framework_config['CONNECT_CMS_USERS']) ?
+		$framework_config['CONNECT_CMS_USERS'] : true);
+	define('FRAMEWORK_SETUP', isset($framework_config['FRAMEWORK_SETUP']) ?
+		$framework_config['FRAMEWORK_SETUP'] : true);
 }
 catch (\Exception $e) {
-	throw new \Exception('Problem setting the framework constants!', 0, $e);	
+	throw new \Exception('Problem setting the framework constants!', 0, $e);
 }
 
 // debug mode
-$app['debug'] = (isset($framework_config['debug'])) ? $framework_config['debug'] : true;
+$app['debug'] = (isset($framework_config['DEBUG'])) ? $framework_config['DEBUG'] : false;
 
 // get the filesystem into the application
 $app['filesystem'] = function () {
@@ -101,10 +110,10 @@ $directories = array(
 		);
 
 // check the needed temporary directories and create them if needed
-if (!$app['filesystem']->exists($directories)) 
+if (!$app['filesystem']->exists($directories))
 	$app['filesystem']->mkdir($directories);
 
-$max_log_size = (isset($framework_config['logfile_max_size'])) ? $framework_config['logfile_max_size'] : 2*1024*1024; // 2 MB
+$max_log_size = (isset($framework_config['LOGFILE_MAX_SIZE'])) ? $framework_config['LOGFILE_MAX_SIZE'] : 2*1024*1024; // 2 MB
 $log_file = FRAMEWORK_PATH.'/logfile/kit2.log';
 if ($app['filesystem']->exists($log_file) && (filesize($log_file) > $max_log_size)) {
 	$app['filesystem']->remove(FRAMEWORK_PATH.'/logfile/kit2.log.bak');
@@ -132,7 +141,7 @@ try {
 	define('CMS_TYPE', $cms_config['CMS_TYPE']);
 	define('CMS_VERSION', $cms_config['CMS_VERSION']);
 } catch (\Exception $e) {
-	throw new \Exception('Problem setting the CMS constants!', 0, $e); 
+	throw new \Exception('Problem setting the CMS constants!', 0, $e);
 }
 $app['monolog']->addDebug('CMS constants defined.');
 
@@ -163,6 +172,9 @@ $app->register(new Silex\Provider\SessionServiceProvider, array(
 ));
 $app['monolog']->addDebug('SessionServiceProvider registered.');
 
+$app->register(new Silex\Provider\UrlGeneratorServiceProvider());
+$app['monolog']->addDebug('UrlGeneratorServiceProvider registered.');
+
 // register Twig
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
 		'twig.path' => array(
@@ -170,7 +182,9 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 				),
 		'twig.options' => array(
 				'cache' => $app['debug'] ? false : FRAMEWORK_PATH.'/temp/cache/',
-				'strict_variables' => $app['debug'] ? true : false
+				'strict_variables' => $app['debug'] ? true : false,
+				'debug' => $app['debug'] ? true : false,
+				'autoescape' => false
 				)
 ));
 $app['monolog']->addDebug('TwigServiceProvider registered.');
@@ -197,13 +211,78 @@ $app->register(new Silex\Provider\TranslationServiceProvider(), array(
 		'locale_fallback' => 'en',
 ));
 
-
 $app['translator'] = $app->share($app->extend('translator', function($translator, $app) {
-	$translator->addLoader('array', new ArrayLoader());	
+	$translator->addLoader('array', new ArrayLoader());
 	return $translator;
 }));
-
 $app['monolog']->addDebug('Translator Service registered. Added ArrayLoader to the Translator');
+
+// register the FormServiceProvider
+$app->register(new FormServiceProvider());
+$app['monolog']->addDebug('Form Service registered.');
+
+// register the HTTP Cache Service
+$app->register(new Silex\Provider\HttpCacheServiceProvider(), array(
+		'http_cache.cache_dir' => FRAMEWORK_PATH.'/temp/cache/',
+));
+$app['monolog']->addDebug('HTTP Cache Service registered.');
+
+
+if (FRAMEWORK_SETUP) {
+	// create the user table for the service provider
+	$Users = new UserProvider($app);
+	$Users->createTable();
+}
+
+$app->register(new Silex\Provider\SecurityServiceProvider());
+
+$app['security.encoder.digest'] = $app->share(function ($app) {
+	return new manufakturPasswordEncoder($app);
+});
+
+$app['security.firewalls'] = array(
+		'login' => array(
+				'pattern' => '^/login$'
+		),
+		'config' => array(
+				'pattern' => '^/config/',
+				'form' => array('login_path' => '/login', 'check_path' => '/admin/login_check'),
+				'users' => $app->share(function () use ($app) {
+					return new UserProvider($app);
+				}),
+				'logout' => array('logout_path' => '/admin/logout')
+		),
+		'admin' => array(
+				'pattern' => '^/admin/',
+				'form' => array('login_path' => '/login', 'check_path' => '/admin/login_check'),
+				'users' => $app->share(function () use ($app) {
+					return new UserProvider($app);
+				}),
+				'logout' => array('logout_path' => '/admin/logout')
+		),
+);
+$app['twig.loader.filesystem']->addPath(MANUFAKTUR_PATH, 'phpManufaktur');
+
+$app->get('/login', function(Request $request) use ($app) {
+	//return $app['twig']->render('/Basic/View/security.login.twig', array(
+	return $app['twig']->render('@phpManufaktur/Basic/View/security.login.twig', array(
+			'title' => $app['translator']->trans('kitFramework Login'),
+			'css_file' => MANUFAKTUR_URL.'/Basic/View/screen.css',
+			'error'         => $app['security.last_error'] ($request),
+			'last_username' => $app['session']->get('_security.last_username'),
+	));
+});
+
+$app->get('/admin/logout', function(Request $request) use ($app) {
+	return new Response('logout!');
+	return $app['twig']->render('logout.html', array());
+});
+
+$app->get('/admin/', function () use ($app) {
+	return new Response('ADMIN AREA');
+	return $app['twig']->render('admin.html', array());
+});
+
 
 $scan_paths = array(
 		MANUFAKTUR_PATH,
@@ -222,5 +301,17 @@ foreach ($scan_paths as $scan_path) {
 	}
 }
 
-// run Silex, run ...
-$app->run();
+if (FRAMEWORK_SETUP) {
+	// the setup flag was set to TRUE, now we assume that we can set it to FALSE
+	$framework_config['FRAMEWORK_SETUP'] = false;
+	if (!file_put_contents(__DIR__.'/config/framework.json', json_encode($framework_config)))
+		throw new \Exception('Can\'t write the configuration file for the framework!');
+	return true;
+}
+
+Request::trustProxyData();
+
+if ($app['debug'])
+	$app->run();
+else
+	$app['http_cache']->run();
