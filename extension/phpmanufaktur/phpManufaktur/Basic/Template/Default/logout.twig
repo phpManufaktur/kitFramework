@@ -1,0 +1,20 @@
+{# 
+  kitFramework
+
+  @author Team phpManufaktur <team@phpmanufaktur.de>
+  @link https://kit2.phpmanufaktur.de
+  @link https://github.com/phpManufaktur/kitFramework/wiki  
+  @copyright 2012 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
+  @license MIT License (MIT) http://www.opensource.org/licenses/MIT
+#}
+{% extends '@template/framework/default/body.twig' %}
+{% block title %}{{ 'kitFramework - Logout'|trans }}{% endblock %}
+{% block head %}
+  {{ parent() }}
+  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/Default/screen.css" media="screen, projection" />
+{% endblock %}
+{% block content %}
+  <div class="logout_container">
+    {{ 'Goodbye, glad to see you again!'|trans }}
+  </div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{# 
+  kitFramework
+
+  @author Team phpManufaktur <team@phpmanufaktur.de>
+  @link https://kit2.phpmanufaktur.de
+  @link https://github.com/phpManufaktur/kitFramework/wiki  
+  @copyright 2012 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
+  @license MIT License (MIT) http://www.opensource.org/licenses/MIT
+#}
+{% extends '@template/framework/default/body.twig' %}
+{% block title %}
+  {{ 'kitFramework - Login'|trans }}
+{% endblock %}
+{% block head %}
+  {{ parent() }}
+  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/Default/screen.css" media="screen, projection" />
+{% endblock %}
+{% block user_navigation %}
+  {# no user navigation at the login dialog! #}
+{% endblock %}  
+{% block content %}
+  <div class="login_container">
+    <div class="login_form">
+      {% if error|length > 0 %}
+        <div class="error">{{ error|trans }}</div>
+      {% endif %}
+      <form action="{{ path('admin_login_check') }}" method="post">
+        <div class="form_label">{{ 'Username'|trans }}</div>
+        <div class="form_input">
+          <input type="text" name="_username" value="{{ last_username }}" />
+        </div>
+        <div class="form_label">{{ 'Password'|trans }}</div>
+        <div class="form_input">
+          <input type="password" name="_password" value="" />
+        </div>
+        <div class="form_label">&nbsp;</div>
+        <div class="form_input">
+          <input type="submit" name="submit" value="{{ 'Login'|trans }}" />
+        </div>
+      </form>
+    </div>
+    <div class="login_logo"></div>
+    <div class="clear"></div>
+    <div class="login_intro">
+      {{ '<p>It seem\'s that this is the first start of the <b>kitFramework</b>.</p><p>To protect the framework you must login with administrator privileges, please use your CMS account for it.</p><p>After login the kitFramework will connect to Github, download additional base components and configure itself.</p>'|trans }}
+    </div>
+  </div>
+{% endblock %}

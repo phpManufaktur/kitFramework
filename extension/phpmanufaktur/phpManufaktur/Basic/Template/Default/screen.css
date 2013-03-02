@@ -2,47 +2,10 @@
  * kitFramework
  *
  * @author Team phpManufaktur <team@phpmanufaktur.de>
- * @link https://addons.phpmanufaktur.de/extendedWYSIWYG
+ * @link https://kit2.phpmanufaktur.de
  * @copyright 2012 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
  * @license MIT License (MIT) http://www.opensource.org/licenses/MIT
  */
-
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Verdana, Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  color: #363636;
-  background-color: #fff;
-}
-#kf_content {
-  width: 960px;
-  height: auto;
-  min-height: 400px;
-  padding: 0;
-  margin: 30px auto 0 auto;
-}
-#kf_footer {
-  padding: 0;
-  margin: 30px auto 30px auto;
-  text-align: center;
-  font-family: Verdana, Helvetica, Arial, sans-serif;
-  font-size: 10px;
-  color: #363636;
-  background-color: transparent;
-}
-#kf_footer a:link,
-#kf_footer a:visited {
-  text-decoration: none;
-  color: #da251d;
-  background-color: transparent;
-}
-#kf_footer a:hover,
-#kf_footer a:active {
-  text-decoration: underline;
-  color: #da251d;
-  background-color: transparent;
-}
 
 .kf_access_denied {
   color: #fff;
@@ -55,7 +18,7 @@ body {
   background-position: top right;
   background-repeat: no-repeat;
 }
-#form label {
+.form_label {
   clear: both;
   float: left;
   width: 150px;
@@ -63,9 +26,12 @@ body {
   margin: 0;
   padding: 4px 5px 0 0;
 }
-#form input {
+.form_input {
   float: left;
   width: 200px;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 .form_submit {
   clear: both;
