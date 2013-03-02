@@ -35,6 +35,6 @@ return array(
     'Monolog' => $vendorDir . '/monolog/monolog/src/',
     'Doctrine\\DBAL' => $vendorDir . '/doctrine/dbal/lib/',
     'Doctrine\\Common' => $vendorDir . '/doctrine/common/lib/',
-    'phpManufaktur' => $vendorDir . '/phpmanufaktur/',
-    'thirdParty' => $vendorDir . '/thirdparty/',
+    'phpManufaktur' => $baseDir . '/extension/phpmanufaktur/',
+    'thirdParty' => $baseDir . '/extension/thirdparty/',
 );
