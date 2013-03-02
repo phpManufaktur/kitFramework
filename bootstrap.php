@@ -4,24 +4,24 @@
  * kitFramework
  *
  * @author Team phpManufaktur <team@phpmanufaktur.de>
- * @link https://addons.phpmanufaktur.de/extendedWYSIWYG
+ * @link https://kit2.phpmanufaktur.de
  * @copyright 2012 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
  * @license MIT License (MIT) http://www.opensource.org/licenses/MIT
  */
 
-require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/framework/autoload.php';
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Debug\ErrorHandler;
 use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
-use Symfony\Component\Locale;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Silex\Provider\FormServiceProvider;
 use phpManufaktur\Basic\Control\UserProvider;
 use phpManufaktur\Basic\Control\manufakturPasswordEncoder;
-use phpManufaktur;
+use phpManufaktur\Basic\Control\twigExtension;
+use phpManufaktur\Basic\Control\Account;
 
 // set the error handling
 ini_set('display_errors', 1);
@@ -82,10 +82,12 @@ try {
 	define('FRAMEWORK_PATH', $framework_config['FRAMEWORK_PATH']);
 	define('FRAMEWORK_TEMP_PATH', isset($framework_config['FRAMEWORK_TEMP_PATH']) ?
 		$framework_config['FRAMEWORK_TEMP_PATH'] : FRAMEWORK_PATH.'/temp');
-	define('MANUFAKTUR_PATH', FRAMEWORK_PATH.'/vendor/phpmanufaktur/phpManufaktur');
-	define('MANUFAKTUR_URL', FRAMEWORK_URL.'/vendor/phpmanufaktur/phpManufaktur');
-	define('THIRDPARTY_PATH', FRAMEWORK_PATH.'/vendor/thirdparty/thirdParty');
-	define('THIRDPARTY_URL', FRAMEWORK_URL.'/vendor/thirdparty/thirdParty');
+	define('MANUFAKTUR_PATH', FRAMEWORK_PATH.'/extension/phpmanufaktur/phpManufaktur');
+	define('MANUFAKTUR_URL', FRAMEWORK_URL.'/extension/phpmanufaktur/phpManufaktur');
+	define('THIRDPARTY_PATH', FRAMEWORK_PATH.'/extension/thirdparty/thirdParty');
+	define('THIRDPARTY_URL', FRAMEWORK_URL.'/extension/thirdparty/thirdParty');
+	define('TEMPLATE_PATH', FRAMEWORK_PATH.'/template');
+	define('TEMPLATE_URL', FRAMEWORK_URL.'/template');
 	define('CONNECT_CMS_USERS', isset($framework_config['CONNECT_CMS_USERS']) ?
 		$framework_config['CONNECT_CMS_USERS'] : true);
 	define('FRAMEWORK_SETUP', isset($framework_config['FRAMEWORK_SETUP']) ?
@@ -177,9 +179,6 @@ $app['monolog']->addDebug('UrlGeneratorServiceProvider registered.');
 
 // register Twig
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
-		'twig.path' => array(
-				FRAMEWORK_PATH.'/vendor/phpmanufaktur/phpManufaktur/'
-				),
 		'twig.options' => array(
 				'cache' => $app['debug'] ? false : FRAMEWORK_PATH.'/temp/cache/',
 				'strict_variables' => $app['debug'] ? true : false,
@@ -187,6 +186,21 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 				'autoescape' => false
 				)
 ));
+
+// set namespaces for phpManufaktur, thirdParty and general template
+$app['twig.loader.filesystem']->addPath(MANUFAKTUR_PATH, 'phpManufaktur');
+$app['twig.loader.filesystem']->addPath(THIRDPARTY_PATH, 'thirdParty');
+$app['twig.loader.filesystem']->addPath(TEMPLATE_PATH, 'template');
+
+$app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+	// add global variables, functions etc. for the templates
+	$twig->addExtension(new twigExtension());
+	if ($app['debug']) {
+		$twig->addExtension(new Twig_Extension_Debug());
+	}
+	return $twig;
+}));
+
 $app['monolog']->addDebug('TwigServiceProvider registered.');
 
 // quick and dirty ... to be improved!
@@ -244,13 +258,8 @@ $app['security.firewalls'] = array(
 		'login' => array(
 				'pattern' => '^/login$'
 		),
-		'config' => array(
-				'pattern' => '^/config/',
-				'form' => array('login_path' => '/login', 'check_path' => '/admin/login_check'),
-				'users' => $app->share(function () use ($app) {
-					return new UserProvider($app);
-				}),
-				'logout' => array('logout_path' => '/admin/logout')
+		'logout' => array(
+				'pattern' => '^/admin/logout$'
 		),
 		'admin' => array(
 				'pattern' => '^/admin/',
@@ -261,24 +270,41 @@ $app['security.firewalls'] = array(
 				'logout' => array('logout_path' => '/admin/logout')
 		),
 );
-$app['twig.loader.filesystem']->addPath(MANUFAKTUR_PATH, 'phpManufaktur');
 
 $app->get('/login', function(Request $request) use ($app) {
-	//return $app['twig']->render('/Basic/View/security.login.twig', array(
-	return $app['twig']->render('@phpManufaktur/Basic/View/security.login.twig', array(
-			'title' => $app['translator']->trans('kitFramework Login'),
-			'css_file' => MANUFAKTUR_URL.'/Basic/View/screen.css',
+	// show the login dialog
+	return $app['twig']->render('@phpManufaktur/Basic/Template/Default/login.twig', array(
 			'error'         => $app['security.last_error'] ($request),
 			'last_username' => $app['session']->get('_security.last_username'),
 	));
-});
+})
+->bind('login');
 
 $app->get('/admin/logout', function(Request $request) use ($app) {
-	return new Response('logout!');
-	return $app['twig']->render('logout.html', array());
-});
+	// show the logout dialog
+	return $app['twig']->render('@phpManufaktur/Basic/Template/Default/logout.twig', array());
+})
+->bind('logout');
+
+$app->get('/admin/account', function(Request $request) use ($app) {
+	// user the user account dialog
+	$account = new Account();
+	return $account->showDialog();
+	return $app['twig']->render('@phpManufaktur/Basic/Template/Default/account.twig', array());
+})
+->bind('admin_account');
 
 $app->get('/admin/', function () use ($app) {
+
+	return $app['twig']->render('@phpManufaktur/Basic/Template/Default/admin.twig', array());
+
+	$token = $app['security']->getToken();
+	$user = array();
+	if (null !== $token) {
+		$user = $token->getUser();
+	}
+	print_r($user);
+
 	return new Response('ADMIN AREA');
 	return $app['twig']->render('admin.html', array());
 });
