@@ -1,0 +1,20 @@
+{
+  "name": "Propangas24",
+  "title": "Manage propan gas order for propangas24.de",
+  "namespace": "phpManufaktur\Propangas24",
+  "release": "0.10",
+  "category": "PHPMANUFAKTUR",
+  "type": "application",
+  "description": [
+    "en": [
+      "short": "Manage propan gas order for propangas24.de",
+      "long": "Manage propan gas order for propangas24.de",
+      "url": "https://addons.phpmanufaktur.de/propangas24"
+    ],
+  ],
+  "require": [
+    "framework": [
+      "release": "0.12"
+    ],
+  ]
+}

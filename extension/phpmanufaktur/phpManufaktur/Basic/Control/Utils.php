@@ -14,14 +14,15 @@ namespace phpManufaktur\Basic\Control;
 class Utils {
 
 	protected $app = null;
-	
+
 	/**
 	 * Constructor for the Utils
 	 */
-	public function __construct($app) {
-		$this->app = $app;	
+	public function __construct() {
+		global $app;
+		$this->app = $app;
 	} // __construct()
-	
+
   /**
    * Sanitize variables and prepare them for saving in a MySQL record
    *
@@ -61,5 +62,143 @@ class Utils {
     $text = str_replace(array("&lt;","&gt;","&quot;","&#039;"), array("<",">","\"","'"), $text);
     return $text;
   } // unsanitizeText()
+
+  /**
+   * Generate a globally unique identifier (GUID)
+   * Uses COM extension under Windows otherwise
+   * create a random GUID in the same style
+   *
+   * @return string $guid
+   */
+  public static function createGUID() {
+  	if (function_exists('com_create_guid')) {
+  		$guid = com_create_guid();
+  		$guid = strtolower($guid);
+  		if (strpos($guid, '{') == 0) {
+  			$guid = substr($guid, 1);
+  		}
+  		if (strpos($guid, '}') == strlen($guid) - 1) {
+  			$guid = substr($guid, 0, strlen($guid) - 2);
+  		}
+  		return $guid;
+  	}
+  	else {
+  		return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+  				mt_rand(0, 0xffff),
+  				mt_rand(0, 0xffff),
+  				mt_rand(0, 0xffff),
+  				mt_rand(0, 0x0fff) | 0x4000,
+  				mt_rand(0, 0x3fff) | 0x8000,
+  				mt_rand(0, 0xffff),
+  				mt_rand(0, 0xffff),
+  				mt_rand(0, 0xffff)
+  				);
+  	}
+  } // createGUID()
+
+  /**
+   * Check a password for length, chars, special chars and return a strength
+   * value between 1 to 10.
+   *
+   * @param string $password
+   * @return number
+   * @link http://www.phpro.org/examples/Password-Strength-Tester.html
+   */
+  function passwordStrength($password)
+  {
+      if (strlen($password) == 0 ) {
+          return 1;
+      }
+      if (strpos($password, ' ') !== false) {
+          return 1;
+      }
+
+      $strength = 0;
+
+      // get the length of the password
+      $length = strlen($password);
+
+      // check if password is not all lower case
+      if (strtolower($password) != $password) {
+          $strength += 1;
+      }
+
+      // check if password is not all upper case
+      if (strtoupper($password) == $password) {
+          $strength += 1;
+      }
+
+      // check string length is 8 -15 chars
+      if ($length >= 8 && $length <= 15) {
+          $strength += 1;
+      }
+
+      // check if lenth is 16 - 35 chars
+      if ($length >= 16 && $length <= 35) {
+          $strength += 2;
+      }
+
+      // check if length greater than 35 chars
+      if ($length > 35) {
+          $strength += 3;
+      }
+
+      // get the numbers in the password
+      preg_match_all('/[0-9]/', $password, $numbers);
+      $strength += count($numbers[0]);
+
+      // check for special chars
+      preg_match_all('/[|!@#$%&*\/=?,;.:\-_+~^\\\]/', $password, $specialchars);
+      $strength += sizeof($specialchars[0]);
+
+      // get the number of unique chars
+      $chars = str_split($password);
+      $num_unique_chars = sizeof(array_unique($chars));
+      $strength += $num_unique_chars * 2;
+
+      // strength is a number 1-10
+      $strength = $strength > 99 ? 99 : $strength;
+      $strength = floor($strength / 10 + 1);
+
+      return $strength;
+  } // passwordStrength()
+
+
+  public function templateFile($template_namespace, $template_file) {
+      global $TEMPLATE_NAMESPACES;
+
+      if ($template_namespace[0] != '@') {
+          throw new \Exception('Namespace expected in variable $template_namespace but path found!');
+      }
+      // no trailing slash!
+      if (strrpos($template_namespace, '/') == strlen($template_namespace)-1)
+          $template_namespace = substr($template_namespace, 0, strlen($template_namespace)-1);
+      // separate the namespace
+      if (false === strpos($template_namespace, '/')) {
+          // only namespace - no subdirectory!
+          $namespace = substr($template_namespace, 1);
+          $directory = '';
+      }
+      else {
+          $namespace = substr($template_namespace, 1, strpos($template_namespace, '/')-1);
+          $directory = substr($template_namespace, strpos($template_namespace, '/'));
+      }
+
+      // no leading slash for the template file
+      if ($template_file[0] == '/')
+          $template_file = substr($template_file, 1);
+      // explode the template names
+      $template_names = explode(',', FRAMEWORK_TEMPLATES);
+      // walk through the template names
+      foreach ($template_names as $name) {
+          $file = $TEMPLATE_NAMESPACES[$namespace].$directory.'/'.$name.'/'.$template_file;
+          if (file_exists($file)) {
+              // success - build the path for Twig
+              return $template_namespace.'/'.$name.'/'.$template_file;
+          }
+      }
+      // Uuups - no template found!
+      throw new \Exception(sprintf('Template file %s not found within the namespace %s!', $template_file, $template_namespace));
+  } // templateFile()
 
 } // class Utils

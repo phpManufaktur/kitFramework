@@ -1,0 +1,62 @@
+/**
+ * Propangas24
+ *
+ * @author Team phpManufaktur <team@phpmanufaktur.de>
+ * @link https://addons.phpmanufaktur.de/propangas24
+ * @copyright 2013 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
+ * @license MIT License (MIT) http://www.opensource.org/licenses/MIT
+ */
+
+.toolbar
+{
+  padding: 3px 0 3px 10px;
+  margin: 15px 0;
+  border-bottom: 1px solid #dddddd;
+  list-style-type: none;
+  text-align: left; /*set to left, center, or right to align the menu as desired*/
+}
+.toolbar li
+{
+  display: inline;
+  margin: 0;
+}
+.toolbar li a
+{
+  text-decoration: none;
+  padding: 3px 7px;
+  margin-right: 3px;
+  border: 1px solid #dddddd;
+  border-bottom: none;
+  background-color: #E8E8E8;
+}
+.toolbar li a:link,
+.toolbar li a:visited
+{
+  color: #AFAFAF;
+  background-color: #e8e8e8;
+}
+.toolbar li.extra_tab a {
+  color:#003366;
+  background-color: #e8e8e8;
+}
+.toolbar li a:hover,
+.toolbar li a:active
+{
+  background-color: #FFFFCC;
+  color: #000;
+}
+.toolbar li.active a
+{ /*selected tab effect*/
+  position: relative;
+  top: 1px;
+  padding-top: 4px;
+  color: #000;
+  background-color: #fff;
+  font-weight: bold;
+}
+
+.message {
+    border: 1px solid red;
+    color: maroon;
+    background-color: yellow;
+}

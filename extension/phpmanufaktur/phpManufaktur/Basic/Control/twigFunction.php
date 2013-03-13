@@ -47,3 +47,8 @@ function twig_user_display_name() {
 		throw new Twig_Error($e->getMessage());
 	}
 } // twig_user_display_name()
+
+function twig_template_file($template_namespace, $template_file) {
+    global $app;
+    return $app['utils']->templateFile($template_namespace, $template_file);
+} // twig_getTemplateFile()

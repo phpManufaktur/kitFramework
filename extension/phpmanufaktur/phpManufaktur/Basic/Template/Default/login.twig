@@ -13,36 +13,30 @@
 {% endblock %}
 {% block head %}
   {{ parent() }}
-  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/Default/screen.css" media="screen, projection" />
+  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/Default/login.css" media="screen, projection" />
 {% endblock %}
 {% block user_navigation %}
   {# no user navigation at the login dialog! #}
 {% endblock %}  
 {% block content %}
-  <div class="login_container">
-    <div class="login_form">
-      {% if error|length > 0 %}
-        <div class="error">{{ error|trans }}</div>
-      {% endif %}
-      <form action="{{ path('admin_login_check') }}" method="post">
-        <div class="form_label">{{ 'Username'|trans }}</div>
-        <div class="form_input">
-          <input type="text" name="_username" value="{{ last_username }}" />
-        </div>
-        <div class="form_label">{{ 'Password'|trans }}</div>
-        <div class="form_input">
-          <input type="password" name="_password" value="" />
-        </div>
-        <div class="form_label">&nbsp;</div>
-        <div class="form_input">
-          <input type="submit" name="submit" value="{{ 'Login'|trans }}" />
-        </div>
-      </form>
-    </div>
-    <div class="login_logo"></div>
-    <div class="clear"></div>
-    <div class="login_intro">
-      {{ '<p>It seem\'s that this is the first start of the <b>kitFramework</b>.</p><p>To protect the framework you must login with administrator privileges, please use your CMS account for it.</p><p>After login the kitFramework will connect to Github, download additional base components and configure itself.</p>'|trans }}
-    </div>
+  <h1>{{ 'kitFramework - Login'|trans }}</h1>
+  {% if error|length > 0 %}
+    <div class="message">{{ error|trans }}</div>
+  {% endif %}
+  {{ '<p>Please login to the kitFramework with your username or email address and the assigned password.</p><p>Your can also use your username and password for the CMS.</p>'|trans }}  
+  <div class="framework_form">  
+    <form action="{{ path('admin_login_check') }}" method="post">
+      <label for="_username" class="required">{{ 'Username or email address'|trans }}</label>
+      <input autofocus type="text" name="_username" value="{{ last_username }}" />
+      <label for="_password" class="required">{{ 'Password'|trans }}</label>
+      <input type="password" name="_password" value="" />
+      <label for="submit">&nbsp;</label>
+      <input type="submit" name="submit" value="{{ 'Login'|trans }}" />
+      <label for="password_hint">&nbsp;</label>
+      <div class="form_input forgot_password_hint">
+        <a href="{{ path('password_forgotten') }}">{{ 'Forgot your password?'|trans }}</a>
+      </div>
+    </form>
   </div>
+  <div class="clear"></div>
 {% endblock %}

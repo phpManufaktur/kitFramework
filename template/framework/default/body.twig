@@ -16,30 +16,30 @@
       <meta name="robots" content="noindex,nofollow" />
       <meta name="description" content="{% block description %}{% endblock %}" />
       <meta name="keywords" content="{% block keywords %}{% endblock %}" />
-      <link rel="stylesheet" type="text/css" href="{{ TEMPLATE_URL }}/framework/default/screen.css" media="screen, projection" />
-    {% endblock %}
+      <link rel="stylesheet" type="text/css" href="{{ FRAMEWORK_TEMPLATE_URL }}/default/css/body.css" media="screen, projection" />
+    {% endblock head %}
   </head>
   <body>
     <div id="framework_body">
       {% block user_navigation %}
         {% if is_authenticated() %}
           <div id="user_navigation">
-            {{ user_display_name() }} | <a href="{{ path('admin_account') }}">{{ 'Account'|trans }}</a> | <a href="{{ path('logout') }}">{{ 'Logout'|trans }}</a>
+            {{ user_display_name() }} | <a href="{{ path('admin_account') }}">{{ 'Account'|trans }}</a> | <a href="{{ path('admin_logout') }}">{{ 'Logout'|trans }}</a>
           </div>
         {% else %}
           <div id="user_navigation">
             <a href="{{ path('login') }}">{{ 'Login'|trans }}</a>
           </div>
         {% endif %}  
-      {% endblock %}
+      {% endblock user_navigation %}
       <div id="framework_content">
         {% block content %}{% endblock %}
       </div>
-    </div>      
-    <div id="framework_footer">
-      {% block footer %}
-        The <a href="https://kit2.phpmanufaktur.de" target="_blank">kitFramework</a> is created by <a href="http://phpmanufaktur.de" target="_blank">phpManufaktur</a> and build on <a href="http://silex.symfony.com" target="_blank">Silex</a>.
-      {% endblock %}
-    </div>
+      <div id="framework_footer">
+        {% block footer %}
+          <a href="https://kit2.phpmanufaktur.de" target="_blank" class="framework_img"></a>
+        {% endblock footer %}
+      </div>    
+    </div>    
   </body>
 </html>

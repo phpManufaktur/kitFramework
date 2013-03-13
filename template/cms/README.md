@@ -1,0 +1,1 @@
+### This folder is reserved for templates which will be used by the parent CMS

@@ -39,6 +39,11 @@
   padding: 10px 0 0 155px;
   text-align: left;
 }
+.forgot_password_hint {
+  padding: 15px 0 0 0;
+  text-align: left;
+  font-size: 9px;
+}
 .login_container {
   margin: 80px auto 0 auto;
   padding: 0;
