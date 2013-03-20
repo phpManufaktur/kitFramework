@@ -7,13 +7,13 @@
   @copyright 2012 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
   @license MIT License (MIT) http://www.opensource.org/licenses/MIT
 #}
-{% extends '@template/framework/default/body.twig' %}
+{% extends template_file('@framework', 'body.twig') %}
 {% block title %}
   {{ 'kitFramework - Login'|trans }}
 {% endblock %}
 {% block head %}
   {{ parent() }}
-  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/Default/login.css" media="screen, projection" />
+  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/default/css/login.css" media="screen, projection" />
 {% endblock %}
 {% block user_navigation %}
   {# no user navigation at the login dialog! #}
@@ -25,7 +25,7 @@
   {% endif %}
   {{ '<p>Please login to the kitFramework with your username or email address and the assigned password.</p><p>Your can also use your username and password for the CMS.</p>'|trans }}  
   <div class="framework_form">  
-    <form action="{{ path('admin_login_check') }}" method="post">
+    <form action="{{ FRAMEWORK_URL }}/admin/login_check" method="post">
       <label for="_username" class="required">{{ 'Username or email address'|trans }}</label>
       <input autofocus type="text" name="_username" value="{{ last_username }}" />
       <label for="_password" class="required">{{ 'Password'|trans }}</label>
@@ -34,7 +34,7 @@
       <input type="submit" name="submit" value="{{ 'Login'|trans }}" />
       <label for="password_hint">&nbsp;</label>
       <div class="form_input forgot_password_hint">
-        <a href="{{ path('password_forgotten') }}">{{ 'Forgot your password?'|trans }}</a>
+        <a href="{{ FRAMEWORK_URL }}/password/forgotten">{{ 'Forgot your password?'|trans }}</a>
       </div>
     </form>
   </div>

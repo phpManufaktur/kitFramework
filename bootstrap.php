@@ -23,6 +23,8 @@ use phpManufaktur\Basic\Control\Account;
 use phpManufaktur\Basic\Data\Security\Users as frameworkUsers;
 use phpManufaktur\Basic\Control\forgottenPassword;
 use phpManufaktur\Basic\Control\Utils;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+
 
 // set the error handling
 ini_set('display_errors', 1);
@@ -88,6 +90,7 @@ try {
     define('FRAMEWORK_URL', $framework_config['FRAMEWORK_URL']);
     define('FRAMEWORK_PATH', $framework_config['FRAMEWORK_PATH']);
     define('FRAMEWORK_TEMP_PATH', isset($framework_config['FRAMEWORK_TEMP_PATH']) ? $framework_config['FRAMEWORK_TEMP_PATH'] : FRAMEWORK_PATH . '/temp');
+    define('FRAMEWORK_TEMP_URL', isset($framwework_config['FRAMEWORK_TEMP_URL']) ? $framework_config['FRAMEWORK_TEMP_URL'] : FRAMEWORK_URL . '/temp');
     define('FRAMEWORK_TEMPLATES', isset($framework_config['FRAMEWORK_TEMPLATES']) ? $framework_config['FRAMEWORK_TEMPLATES'] : 'default');
     define('MANUFAKTUR_PATH', FRAMEWORK_PATH . '/extension/phpmanufaktur/phpManufaktur');
     define('MANUFAKTUR_URL', FRAMEWORK_URL . '/extension/phpmanufaktur/phpManufaktur');
@@ -176,7 +179,10 @@ $app['monolog']->addDebug('DoctrineServiceProvider registered');
 
 // register the session handler
 $app->register(new Silex\Provider\SessionServiceProvider(), array(
-    'session.storage.save_path' => dirname(__DIR__) . '/temp/session'
+    'session.storage.save_path' => dirname(__DIR__) . '/temp/session',
+    'session.storage.options' => array(
+        'cookie_lifetime' => 0
+    )
 ));
 $app['monolog']->addDebug('SessionServiceProvider registered.');
 
@@ -303,60 +309,61 @@ if (FRAMEWORK_SETUP) {
     }
 }
 
-$app->register(new Silex\Provider\SecurityServiceProvider());
+$app->register(new Silex\Provider\SecurityServiceProvider(), array(
+    'security.firewalls' => array(
+        'admin' => array(
+            'pattern' => '^/admin',
+            'form' => array(
+                'login_path' => '/login',
+                'check_path' => '/admin/login_check'
+            ),
+            'users' => $app->share(function  () use( $app)
+            {
+                return new UserProvider($app);
+            }),
+            'logout' => array(
+                'logout_path' => '/admin/logout'
+            )
+        )
+    ),
+    'security.encoder.digest' => $app->share(function  ($app)
+    {
+        return new manufakturPasswordEncoder();
+    })
+));
 
-$app['security.encoder.digest'] = $app->share(function  ($app)
-{
-    return new manufakturPasswordEncoder();
+
+$app->get('/', function(Request $request) use ($app) {
+    return 'About ...';
 });
 
-$app['security.firewalls'] = array(
-    'admin' => array(
-        'pattern' => '^/admin',
-        'form' => array(
-            'login_path' => '/login',
-            'check_path' => '/admin/login_check'
-        ),
-        'users' => $app->share(function  () use( $app)
-        {
-            return new UserProvider($app);
-        }),
-        'logout' => array(
-            'logout_path' => '/admin/logout'
-        )
-    )
-);
 
-$app->get('/login', function (Request $request) use( $app)
+$app->get('/login', function (Request $request) use($app)
 {
     return $app['twig']->render($app['utils']->templateFile('@phpManufaktur/Basic/Template', 'login.twig'), array(
         'error' => $app['security.last_error']($request),
         'last_username' => $app['session']->get('_security.last_username'),
     ));
-})
-    ->bind('login');
+});
 
 $app->get('/password/forgotten', function () use($app)
 {
     // user has forgot the password
     $forgotPassword = new forgottenPassword();
     return $forgotPassword->dialogForgottenPassword();
-})
-    ->bind('password_forgotten');
+});
 
 $app->match('/password/reset', function (Request $request) use ($app)
 {
     // send the user a GUID to reset the password
     $resetPassword = new forgottenPassword();
     return $resetPassword->dialogResetPassword();
-})
-    ->bind('password_reset');
+});
 
 $app->match('/password/retype', function (Request $request) use ($app) {
     $retypePassword = new forgottenPassword();
     return $retypePassword->dialogRetypePassword();
-    })
-    ->bind('password_retype');
+});
 
 $app->get('/password/create/{guid}', function ($guid) use ($app)
 {
@@ -370,8 +377,7 @@ $app->get('/admin/account', function  (Request $request) use( $app)
     // user the user account dialog
     $account = new Account();
     return $account->showDialog();
-})
-    ->bind('admin_account');
+});
 
 $app->get('/admin', function  () use( $app)
 {

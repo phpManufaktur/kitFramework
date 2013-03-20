@@ -22,6 +22,22 @@ body {
   padding: 0;
   margin: 0 auto;
 }
+#framework_body a {
+  text-decoration: none;
+}
+#framework_body a:link,
+#framework_body a:visited {
+  color: #da251d;
+  background-color: transparent;
+  text-decoration: none;
+}
+#framework_body a:hover,
+#framework_body a:active {
+  color: #da251d;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
 #framework_content {
   width: 920px;
   height: auto;
@@ -92,21 +108,6 @@ a:active.framework_img {
   text-align: right;
   font-size: 11px;
 }
-a {
-  text-decoration: none;
-}
-a:link,
-a:visited {
-  color: #da251d;
-  background-color: transparent;
-  text-decoration: none;
-}
-a:hover,
-a:active {
-  color: #da251d;
-  background-color: transparent;
-  text-decoration: underline;
-}
 .clear {
   clear: both;
   width: 0;
@@ -148,4 +149,7 @@ a:active {
 }
 .framework_form input[type=submit] {
   width: 150px;
+}
+.framework_form input[type=file] {
+  width: 500px;
 }

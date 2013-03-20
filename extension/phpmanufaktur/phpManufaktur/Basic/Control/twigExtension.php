@@ -30,6 +30,7 @@ class twigExtension extends Twig_Extension {
 	 */
 	public function getGlobals() {
 		return array(
+		    'FRAMEWORK_URL' => FRAMEWORK_URL,
 				'FRAMEWORK_TEMPLATE_URL' => FRAMEWORK_TEMPLATE_URL,
 		    'CMS_TEMPLATE_URL' => CMS_TEMPLATE_URL,
 				'MANUFAKTUR_URL' => MANUFAKTUR_URL,

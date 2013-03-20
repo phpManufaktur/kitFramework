@@ -24,12 +24,12 @@
       {% block user_navigation %}
         {% if is_authenticated() %}
           <div id="user_navigation">
-            {{ user_display_name() }} | <a href="{{ path('admin_account') }}">{{ 'Account'|trans }}</a> | <a href="{{ path('admin_logout') }}">{{ 'Logout'|trans }}</a>
+            {{ user_display_name() }} | <a href="{{ FRAMEWORK_URL }}/admin/account">{{ 'Account'|trans }}</a> | <a href="{{ FRAMEWORK_URL }}/admin/logout">{{ 'Logout'|trans }}</a>
           </div>
-        {% else %}
+        {#% else %}
           <div id="user_navigation">
-            <a href="{{ path('login') }}">{{ 'Login'|trans }}</a>
-          </div>
+            <a href="{{ FRAMEWORK_URL }}{{ path('login') }}">{{ 'Login'|trans }}</a>
+          </div> #}
         {% endif %}  
       {% endblock user_navigation %}
       <div id="framework_content">

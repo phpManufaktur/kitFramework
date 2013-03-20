@@ -7,11 +7,11 @@
   @copyright 2012 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
   @license MIT License (MIT) http://www.opensource.org/licenses/MIT
 #}
-{% extends '@template/framework/default/body.twig' %}
+{% extends template_file('@framework', 'body.twig') %}
 {% block title %}{{ 'kitFramework - Admin'|trans }}{% endblock %}
 {% block head %}
   {{ parent() }}
-  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/Default/screen.css" media="screen, projection" />
+  <link rel="stylesheet" type="text/css" href="{{ MANUFAKTUR_URL }}/Basic/Template/default/css/admin.css" media="screen, projection" />
 {% endblock %}
 {% block content %}
   <div class="admin_container">
