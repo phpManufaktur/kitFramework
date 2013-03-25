@@ -12,6 +12,8 @@
 namespace phpManufaktur\Basic\Data\Security;
 
 
+use phpManufaktur\Basic\Control\manufakturPasswordEncoder;
+
 class Users
 {
 
@@ -197,15 +199,19 @@ EOD;
             $SQL = "SELECT * FROM `".FRAMEWORK_TABLE_PREFIX."users` WHERE `guid`='$guid'";
             $result = $this->app['db']->fetchAssoc($SQL);
         } catch (\Doctrine\DBAL\DBALException $e) {
-            throw new \Exception($e->getMessage(), 0, $e);
+            throw new \Exception($e->getMessage());
         }
         if (!is_array($result) || !isset($result['guid'])) {
             return false;
         }
-        $user = array();
-        foreach ($result as $key => $value)
-            $user[$key] = (is_string($value)) ? $this->app['utils']->unsanitizeText($value) : $value;
-        return $user;
+        try {
+            $user = array();
+            foreach ($result as $key => $value)
+                $user[$key] = (is_string($value)) ? $this->app['utils']->unsanitizeText($value) : $value;
+            return $user;
+        } catch (\Doctrine\DBAL\DBALException $e)  {
+            throw new \Exception($e->getMessage());
+        }
     } // selectUserByGUID()
 
     /**
@@ -226,5 +232,32 @@ EOD;
             throw new \Exception($e->getMessage(), 0, $e);
         }
     } // updateUser()
+
+    public function existsUser($username) {
+        try {
+            $SQL = "SELECT `id` FROM `".FRAMEWORK_TABLE_PREFIX."users` WHERE `username`='$username' OR `email`='$username'";
+            $result = $this->app['db']->fetchAssoc($SQL);
+        } catch (\Doctrine\DBAL\DBALException $e) {
+            throw new \Exception($e->getMessage(), 0, $e);
+        }
+        return (!is_array($result) || !isset($result['id'])) ? false : true;
+    } // existsUser()
+
+    public function checkLogin($username, $password, $roles=array())
+    {
+        try {
+            $passwordEncoder = new manufakturPasswordEncoder();
+            $pass = $passwordEncoder->encodePassword($password, '');
+            $SQL = "SELECT `roles` FROM `".FRAMEWORK_TABLE_PREFIX."users` WHERE (`username`='$username' OR `email`='$username') AND `password`='$pass'";
+            $result = $this->app['db']->fetchAssoc($SQL);
+        } catch (\Doctrine\DBAL\DBALException $e) {
+            throw new \Exception($e->getMessage(), 0, $e);
+        }
+        if (!is_array($result) || !isset($result['roles'])) {
+            return false;
+        }
+        $roles = explode(',', $result['roles']);
+        return true;
+    }
 
 } // class Users
