@@ -1,3 +1,4 @@
 {
-  "DEBUG":false
+  "DEBUG":true,
+  "FRAMEWORK_TEMPLATES":"default"
 }
