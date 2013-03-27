@@ -27,6 +27,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 
 // set the error handling
+
 ini_set('display_errors', 1);
 error_reporting(- 1);
 ErrorHandler::register();
@@ -400,6 +401,19 @@ foreach ($scan_paths as $scan_path) {
         }
     }
 }
+
+// catch all kitCommands
+$app->match('/command/{command}/{params}', function (Request $request, $command, $params) use ($app) {
+    try {
+        $subRequest = Request::create('/cmd/'.$command.'/'.$params, 'GET');
+        // important: we dont want that the app handle catch errors, so set the third parameter to false!
+        $result = $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
+    } catch (\Exception $e) {
+        $result = "~~ <b>Error</b>: Unknown kitCommand: <i>$command</i> ~~";
+    }
+    return $result;
+});
+
 
 if (FRAMEWORK_SETUP) {
     // the setup flag was set to TRUE, now we assume that we can set it to FALSE
