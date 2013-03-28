@@ -10,7 +10,7 @@
  */
 require_once __DIR__ . '/framework/autoload.php';
 
-use Symfony\Component\HttpFoundation\Response;
+//use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Debug\ErrorHandler;
 use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
@@ -24,6 +24,9 @@ use phpManufaktur\Basic\Data\Security\Users as frameworkUsers;
 use phpManufaktur\Basic\Control\forgottenPassword;
 use phpManufaktur\Basic\Control\Utils;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use phpManufaktur\Basic\Control\Welcome;
+use Symfony\Component\Security\Core\User\User;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 
 // set the error handling
@@ -334,11 +337,6 @@ $app->register(new Silex\Provider\SecurityServiceProvider(), array(
 ));
 
 
-$app->get('/', function(Request $request) use ($app) {
-    return 'About ...';
-});
-
-
 $app->get('/login', function (Request $request) use($app)
 {
     return $app['twig']->render($app['utils']->templateFile('@phpManufaktur/Basic/Template', 'login.twig'), array(
@@ -380,11 +378,6 @@ $app->get('/admin/account', function  (Request $request) use( $app)
     return $account->showDialog();
 });
 
-$app->get('/admin', function  () use( $app)
-{
-    return $app['twig']->render($app['utils']->templateFile('@phpManufaktur/Basic/Template', 'admin.twig'), array());
-});
-
 $scan_paths = array(
     MANUFAKTUR_PATH,
     THIRDPARTY_PATH
@@ -414,6 +407,52 @@ $app->match('/command/{command}/{params}', function (Request $request, $command,
     return $result;
 });
 
+
+
+$app->get('/', function(Request $request) use ($app) {
+    $subRequest = Request::create('/welcome', 'GET');
+    return $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
+});
+
+$app->get('/admin', function(Request $request) use ($app) {
+    $subRequest = Request::create('/welcome', 'GET');
+    return $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
+});
+
+$app->get('/admin/welcome', function (Request $request) use ($app) {
+    $Welcome = new Welcome();
+    return $Welcome->exec();
+});
+
+$app->match('/welcome', function (Request $request) use ($app) {
+    $Welcome = new Welcome();
+    return $Welcome->exec();
+});
+
+$app->match('/welcome/cms/{cms}', function ($cms) use ($app) {
+    // get the CMS info parameters
+    $cms = json_decode(base64_decode($cms), true);
+
+    // save them partial into session
+    $app['session']->set('CMS_TYPE', $cms['type']);
+    $app['session']->set('CMS_VERSION', $cms['version']);
+    $app['session']->set('CMS_LOCALE', $cms['locale']);
+    $app['session']->set('CMS_USER_NAME', $cms['username']);
+
+    // auto login into the admin area and then exec the welcome dialog
+    $secureAreaName = 'admin';
+    // @todo the access control is very soft and the ROLE is actually not checked!
+    $user = new User($cms['username'],'', array('ROLE_ADMIN'), true, true, true, true);
+    $token = new UsernamePasswordToken($user, null, $secureAreaName, $user->getRoles());
+    $app['security']->setToken($token);
+    $app['session']->set('_security_'.$secureAreaName, serialize($token) );
+
+    $usage = ($cms['target'] == 'cms') ? $cms['type'] : 'framework';
+
+    // sub request to the welcome dialog
+    $subRequest = Request::create('/admin/welcome', 'GET', array('usage' => $usage));
+    return $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST);
+});
 
 if (FRAMEWORK_SETUP) {
     // the setup flag was set to TRUE, now we assume that we can set it to FALSE

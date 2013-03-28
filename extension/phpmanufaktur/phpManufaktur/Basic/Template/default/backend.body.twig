@@ -1,0 +1,31 @@
+{# 
+  kitFramework
+
+  @author Team phpManufaktur <team@phpmanufaktur.de>
+  @link https://kit2.phpmanufaktur.de
+  @link https://github.com/phpManufaktur/kitFramework/wiki  
+  @copyright 2012 Ralf Hertsch <ralf.hertsch@phpmanufaktur.de>
+  @license MIT License (MIT) http://www.opensource.org/licenses/MIT
+#}
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block head %}
+      <title>{% block title %}{% endblock %}</title>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+      <meta name="robots" content="noindex,nofollow" />
+      <meta name="description" content="{% block description %}{% endblock %}" />
+      <meta name="keywords" content="{% block keywords %}{% endblock %}" />
+      <script async src="{{ MANUFAKTUR_URL}}/Basic/Template/default/jquery/jquery.min.js"></script>
+    {% endblock head %}
+  </head>
+  <body>
+    <div id="kf_body">
+      {% block content %}
+      {% endblock content %}
+    </div>
+    {% block footer %}
+      <script async src="{{ MANUFAKTUR_URL}}/Basic/Template/default/jquery/iframe.resize.js"></script>
+    {% endblock footer %}
+  </body>
+</html>      
