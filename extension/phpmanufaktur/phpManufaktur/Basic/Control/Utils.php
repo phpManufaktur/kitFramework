@@ -201,4 +201,77 @@ class Utils {
       throw new \Exception(sprintf('Template file %s not found within the namespace %s!', $template_file, $template_namespace));
   } // templateFile()
 
+  /**
+   * Formatiert einen BYTE Wert in einen lesbaren Wert und gibt
+   * einen Byte, KB, MB oder GB String zurueck
+   *
+   * @param integer $byte
+   * @return string
+   */
+  public static function bytes2string($byte)
+  {
+      if ($byte < 1024) {
+          $result = round($byte, 2) . ' Byte';
+      }
+      elseif ($byte >= 1024 and $byte < pow(1024, 2)) {
+          $result = round($byte / 1024, 2) . ' KB';
+      }
+      elseif ($byte >= pow(1024, 2) and $byte < pow(1024, 3)) {
+          $result = round($byte / pow(1024, 2), 2) . ' MB';
+      }
+      elseif ($byte >= pow(1024, 3) and $byte < pow(1024, 4)) {
+          $result = round($byte / pow(1024, 3), 2) . ' GB';
+      }
+      elseif ($byte >= pow(1024, 4) and $byte < pow(1024, 5)) {
+          $result = round($byte / pow(1024, 4), 2) . ' TB';
+      }
+      elseif ($byte >= pow(1024, 5) and $byte < pow(1024, 6)) {
+          $result = round($byte / pow(1024, 5), 2) . ' PB';
+      }
+      elseif ($byte >= pow(1024, 6) and $byte < pow(1024, 7)) {
+          $result = round($byte / pow(1024, 6), 2) . ' EB';
+      }
+      return $result;
+  } // bytes2string()
+
+  /**
+   * fixes a path by removing //, /../ and other things
+   *
+   * @access public
+   * @param  string  $path - path to fix
+   * @return string
+   **/
+  public function sanitizePath($path)
+  {
+      // remove / at end of string; this will make sanitizePath fail otherwise!
+      $path = preg_replace('~/{1,}$~', '', $path);
+
+      // make all slashes forward
+      $path = str_replace('\\', '/', $path);
+
+      // bla/./bloo ==> bla/bloo
+      $path = preg_replace('~/\./~', '/', $path);
+
+      // resolve /../
+      // loop through all the parts, popping whenever there's a .., pushing otherwise.
+      $parts = array();
+      foreach (explode('/', preg_replace('~/+~', '/', $path)) as $part) {
+          if ($part === ".." || $part == '') {
+              array_pop($parts);
+          }
+          elseif ($part!="") {
+              $parts[] = $part;
+          }
+      }
+
+      $new_path = implode("/", $parts);
+
+      // windows
+      if (!preg_match('/^[a-z]\:/i', $new_path)) {
+          $new_path = '/'.$new_path;
+      }
+
+      return $new_path;
+  } // sanitizePath()
+
 } // class Utils
