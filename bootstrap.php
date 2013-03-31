@@ -106,6 +106,10 @@ try {
     define('CMS_TEMPLATE_URL', FRAMEWORK_URL . '/template/cms');
     define('CONNECT_CMS_USERS', isset($framework_config['CONNECT_CMS_USERS']) ? $framework_config['CONNECT_CMS_USERS'] : true);
     define('FRAMEWORK_SETUP', isset($framework_config['FRAMEWORK_SETUP']) ? $framework_config['FRAMEWORK_SETUP'] : true);
+    define('FRAMEWORK_MEDIA_PATH', FRAMEWORK_PATH.'/media/public');
+    define('FRAMEWORK_MEDIA_URL', FRAMEWORK_URL.'/media/public');
+    define('FRAMEWORK_MEDIA_PROTECTED_PATH', FRAMEWORK_PATH.'/media/protected');
+    define('FRAMEWORK_MEDIA_PROTECTED_URL', FRAMEWORK_URL.'/media/protected');
 } catch (\Exception $e) {
     throw new \Exception('Problem setting the framework constants!', 0, $e);
 }
@@ -396,13 +400,29 @@ foreach ($scan_paths as $scan_path) {
 }
 
 // catch all kitCommands
-$app->match('/command/{command}/{params}', function (Request $request, $command, $params) use ($app) {
+$app->match('/kit_command/{command}/{params}', function (Request $request, $command, $params) use ($app) {
     try {
-        $subRequest = Request::create('/cmd/'.$command.'/'.$params, 'GET');
-        // important: we dont want that the app handle catch errors, so set the third parameter to false!
+        $subRequest = Request::create('/command/'.$command.'/'.$params, 'GET');
+        // important: we dont want that app->handle() catch errors, so set the third parameter to false!
         $result = $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
     } catch (\Exception $e) {
-        $result = "~~ <b>Error</b>: Unknown kitCommand: <i>$command</i> ~~";
+        $parameters = json_decode(base64_decode($params), true);
+        if (isset($parameters['params']['debug']) && $parameters['params']['debug']) {
+            // the debug parameter isset, so return the error information
+            $file = substr($e->getFile(), strlen(FRAMEWORK_PATH));
+            $result = <<<EOD
+    <div style="border:1px solid #ccc;color:#000;background-color:#fff8dc;margin:20px 0 10px 0;padding:10px;font-size:13px;">
+      <p>Error executing the kitCommand <b>$command</b>:</p>
+      <p><b>File:</b> $file</p>
+      <p><b>Line:</b> {$e->getLine()}</p>
+      <p><b>Message:</b> {$e->getMessage()}</p>
+    </div>
+EOD;
+        }
+        else {
+            // no debug parameter, we assume that the kitCommand does not exists
+            $result = "~~ <b>Error</b>: Can't execute the kitCommand: <i>$command</i> ~~";
+        }
     }
     return $result;
 });
@@ -453,6 +473,8 @@ $app->match('/welcome/cms/{cms}', function ($cms) use ($app) {
     $subRequest = Request::create('/admin/welcome', 'GET', array('usage' => $usage));
     return $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST);
 });
+
+
 
 if (FRAMEWORK_SETUP) {
     // the setup flag was set to TRUE, now we assume that we can set it to FALSE
