@@ -84,6 +84,40 @@ function readConfiguration ($file)
     return $config;
 } // readConfiguration()
 
+/**
+ * Scan the given $locale_path for language files and add them to the global
+ * translator resource
+ *
+ * @param string $locale_path
+ * @throws \Exception
+ */
+function addLanguageFiles($locale_path)
+{
+    global $app;
+
+    // scan the /Locale directory and add all available languages
+    try {
+        if (false === ($lang_files = scandir($locale_path)))
+            throw new \Exception(sprintf("Can't read the /Locale directory %s!", $locale_path));
+        $ignore = array('.', '..', 'index.php');
+        foreach ($lang_files as $lang_file) {
+            if (!is_file($locale_path.'/'.$lang_file)) continue;
+            if (in_array($lang_file, $ignore)) continue;
+            $lang_name = pathinfo($locale_path.'/'.$lang_file, PATHINFO_FILENAME);
+            // get the array from the desired file
+            $lang_array = include_once $locale_path.'/'.$lang_file;
+            // add the locale resource file
+            $app['translator'] = $app->share($app->extend('translator', function ($translator, $app) use ($lang_array, $lang_name) {
+                $translator->addResource('array', $lang_array, $lang_name);
+                return $translator;
+            }));
+        }
+    }
+    catch (\Exception $e) {
+        throw new \Exception(sprintf('Error scanning the /Locale directory %s.', $locale_path));
+    }
+} // addLanguageFiles()
+
 // init application
 $app = new Silex\Application();
 
