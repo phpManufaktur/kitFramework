@@ -1,8 +1,8 @@
-### kitFramework
+# kitFramework #
 
-The Framework for KeepInTouch is based on the [SILEX Framework] [1] and is preconfigured for the kitFramework Extensions of the phpManufaktur and for 3rd party extensions.
+The kitFramework is based on [Symfony](http://symfony.com/ "Symfony") and [Silex](http://silex.sensiolabs.org/ "Silex") and extend the Content Management System [WebsiteBaker](http://websitebaker2.org) and [LEPTON CMS](http://lepton-cms.org) with powerful applications and additional tools.
 
-Please check out the [kitFramework API] [2] for more informations.
+Please check out the [kitFramework API](https://github.com/phpManufaktur/kitFramework/wiki) for more information.
 
 #### Requirements
 
@@ -11,9 +11,4 @@ Please check out the [kitFramework API] [2] for more informations.
 
 #### First Steps
 
-The **KeepInTouch Framework** is in BETA state, to get startet please visit the [KIT2 Homepage] [3], read the [kitFramework API] [2] and join the [Addons Support Group] [4] to get further information and support.
-
-[1]: http://silex.sensiolabs.org/
-[2]: https://github.com/phpManufaktur/kitFramework/wiki
-[3]: https://kit2.phpmanufaktur.de
-[4]: https://support.phpmanufaktur.de
+The **kitFramework** is in BETA state, to get startet please visit the [KIT2 Homepage](https://kit2.phpmanufaktur.de), read the [kitFramework API](https://github.com/phpManufaktur/kitFramework/wiki) and join the [Addons Support Group](https://support.phpmanufaktur.de) to get further information and support.
