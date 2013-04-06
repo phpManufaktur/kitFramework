@@ -1,12 +1,8 @@
-# kitFramework #
+## kitFramework Changelog ##
 
-(c) 2013 by [phpManufaktur](https://phpmanufaktur.de)
+**0.17** - 2013-04-06
 
-Ralf Hertsch, Stockholmer Str. 31, 13359 Berlin (Germany)
-
-<https://kit2.phpManufaktur.de> - <team@phpManufaktur.de>
-
-## Changelog ##
+* moved the essential content of /bootstrap.php loader to /phpManufaktur/Basic/include.bootstrap.php
 
 **0.16** - 2013-04-05
 
@@ -28,7 +24,7 @@ Ralf Hertsch, Stockholmer Str. 31, 13359 Berlin (Germany)
 
 * *experimental*, not published
 
-**0.1**1 - 2013-02-14
+**0.11** - 2013-02-14
 
 * *experimental*, not published
 

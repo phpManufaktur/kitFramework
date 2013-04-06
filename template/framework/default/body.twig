@@ -22,14 +22,10 @@
   <body>
     <div id="framework_body">
       {% block user_navigation %}
-        {% if is_authenticated() %}
+        {% if is_authenticated(app) %}
           <div id="user_navigation">
-            {{ user_display_name() }} | <a href="{{ FRAMEWORK_URL }}/admin/account">{{ 'Account'|trans }}</a> | <a href="{{ FRAMEWORK_URL }}/admin/logout">{{ 'Logout'|trans }}</a>
+            {{ user_display_name(app) }} | <a href="{{ FRAMEWORK_URL }}/admin/account">{{ 'Account'|trans }}</a> | <a href="{{ FRAMEWORK_URL }}/admin/logout">{{ 'Logout'|trans }}</a>
           </div>
-        {#% else %}
-          <div id="user_navigation">
-            <a href="{{ FRAMEWORK_URL }}{{ path('login') }}">{{ 'Login'|trans }}</a>
-          </div> #}
         {% endif %}  
       {% endblock user_navigation %}
       <div id="framework_content">
