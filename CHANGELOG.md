@@ -1,4 +1,4 @@
-## kitFramework Changelog ##
+## kitFramework - Changelog ##
 
 **0.17** - 2013-04-06
 
