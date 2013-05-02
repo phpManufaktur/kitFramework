@@ -26,7 +26,8 @@
     "autoload": {
         "psr-0": {
           "phpManufaktur": "extension/phpmanufaktur",
-          "thirdparty": "extension/thirdparty"
+          "thirdparty": "extension/thirdparty",
+          "dflydev": "extension/framework/dflydev"
           }
     }
 }
