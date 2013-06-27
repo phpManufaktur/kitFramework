@@ -16,7 +16,10 @@
       <meta name="robots" content="noindex,nofollow" />
       <meta name="description" content="{% block description %}{% endblock %}" />
       <meta name="keywords" content="{% block keywords %}{% endblock %}" />
+      <meta name=”content-language” content=”de” />
+      {% block stylesheet %}
       <link rel="stylesheet" type="text/css" href="{{ FRAMEWORK_TEMPLATE_URL }}/default/css/body.css" media="screen, projection" />
+      {% endblock stylesheet %}
     {% endblock head %}
   </head>
   <body>
