@@ -123,6 +123,11 @@ a:active.framework_img {
   font-size: 13px;
   text-align: left;
 }
+.message .item {
+  border: none;
+  padding: 0;
+  margin: 5px 0 5px 0;
+}
 .framework_form {
   margin: 40px 0 20px 0;
   padding: 0;
