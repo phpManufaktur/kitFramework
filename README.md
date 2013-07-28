@@ -13,5 +13,4 @@ Please check out the [kitFramework API](https://github.com/phpManufaktur/kitFram
 
 The **kitFramework** is in BETA state, to get startet please visit the [KIT2 Homepage](https://kit2.phpmanufaktur.de), read the [kitFramework API](https://github.com/phpManufaktur/kitFramework/wiki) and join the [Addons Support Group](https://support.phpmanufaktur.de) to get further information and support.
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/phpManufaktur/kitFramework/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/e643055c169d747a74ed2ae593c90a12 "githalytics.com")](http://githalytics.com/phpManufaktur/kitFramework)
