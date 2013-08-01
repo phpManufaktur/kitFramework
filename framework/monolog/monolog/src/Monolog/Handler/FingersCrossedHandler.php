@@ -34,11 +34,11 @@ class FingersCrossedHandler extends AbstractHandler
     protected $stopBuffering;
 
     /**
-     * @param callback|HandlerInterface $handler Handler or factory callback($record, $fingersCrossedHandler).
+     * @param callable|HandlerInterface       $handler            Handler or factory callable($record, $fingersCrossedHandler).
      * @param int|ActivationStrategyInterface $activationStrategy Strategy which determines when this handler takes action
-     * @param int $bufferSize How many entries should be buffered at most, beyond that the oldest items are removed from the buffer.
-     * @param Boolean $bubble Whether the messages that are handled can bubble up the stack or not
-     * @param Boolean $stopBuffering Whether the handler should stop buffering after being triggered (default true)
+     * @param int                             $bufferSize         How many entries should be buffered at most, beyond that the oldest items are removed from the buffer.
+     * @param Boolean                         $bubble             Whether the messages that are handled can bubble up the stack or not
+     * @param Boolean                         $stopBuffering      Whether the handler should stop buffering after being triggered (default true)
      */
     public function __construct($handler, $activationStrategy = null, $bufferSize = 0, $bubble = true, $stopBuffering = true)
     {
@@ -69,6 +69,12 @@ class FingersCrossedHandler extends AbstractHandler
      */
     public function handle(array $record)
     {
+        if ($this->processors) {
+            foreach ($this->processors as $processor) {
+                $record = call_user_func($processor, $record);
+            }
+        }
+
         if ($this->buffering) {
             $this->buffer[] = $record;
             if ($this->bufferSize > 0 && count($this->buffer) > $this->bufferSize) {
@@ -79,10 +85,13 @@ class FingersCrossedHandler extends AbstractHandler
                     $this->buffering = false;
                 }
                 if (!$this->handler instanceof HandlerInterface) {
+                    if (!is_callable($this->handler)) {
+                        throw new \RuntimeException("The given handler (".json_encode($this->handler).") is not a callable nor a Monolog\Handler\HandlerInterface object");
+                    }
                     $this->handler = call_user_func($this->handler, $record, $this);
-                }
-                if (!$this->handler instanceof HandlerInterface) {
-                    throw new \RuntimeException("The factory callback should return a HandlerInterface");
+                    if (!$this->handler instanceof HandlerInterface) {
+                        throw new \RuntimeException("The factory callable should return a HandlerInterface");
+                    }
                 }
                 $this->handler->handleBatch($this->buffer);
                 $this->buffer = array();

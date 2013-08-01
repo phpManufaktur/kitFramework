@@ -6,6 +6,12 @@ MIT License (MIT) - <http://www.opensource.org/licenses/MIT>
 
 kitFramework - <https://kit2.phpmanufaktur.de>
 
+**0.20** - 2013-08-01
+
+* upgraded to the Silex framework 1.1.0 (2013-05-04)
+* added /framework/README.md
+* added /framework/VERSION
+
 **0.19** - 2013-07-25
 
 * first public BETA release

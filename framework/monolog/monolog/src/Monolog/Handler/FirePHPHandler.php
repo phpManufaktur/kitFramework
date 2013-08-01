@@ -11,7 +11,6 @@
 
 namespace Monolog\Handler;
 
-use Monolog\Logger;
 use Monolog\Formatter\WildfireFormatter;
 
 /**
@@ -52,14 +51,14 @@ class FirePHPHandler extends AbstractProcessingHandler
      */
     protected static $messageIndex = 1;
 
-    protected $sendHeaders = true;
+    protected static $sendHeaders = true;
 
     /**
      * Base header creation function used by init headers & record headers
      *
-     * @param array $meta Wildfire Plugin, Protocol & Structure Indexes
-     * @param string $message Log message
-     * @return array Complete header string ready for the client as key and message as value
+     * @param  array  $meta    Wildfire Plugin, Protocol & Structure Indexes
+     * @param  string $message Log message
+     * @return array  Complete header string ready for the client as key and message as value
      */
     protected function createHeader(array $meta, $message)
     {
@@ -72,7 +71,7 @@ class FirePHPHandler extends AbstractProcessingHandler
      * Creates message header from record
      *
      * @see createHeader()
-     * @param array $record
+     * @param  array  $record
      * @return string
      */
     protected function createRecordHeader(array $record)
@@ -118,7 +117,7 @@ class FirePHPHandler extends AbstractProcessingHandler
      */
     protected function sendHeader($header, $content)
     {
-        if (!headers_sent() && $this->sendHeaders) {
+        if (!headers_sent() && self::$sendHeaders) {
             header(sprintf('%s: %s', $header, $content));
         }
     }
@@ -134,7 +133,7 @@ class FirePHPHandler extends AbstractProcessingHandler
     {
         // WildFire-specific headers must be sent prior to any messages
         if (!self::$initialized) {
-            $this->sendHeaders = $this->headersAccepted();
+            self::$sendHeaders = $this->headersAccepted();
 
             foreach ($this->getInitHeaders() as $header => $content) {
                 $this->sendHeader($header, $content);
@@ -157,5 +156,29 @@ class FirePHPHandler extends AbstractProcessingHandler
         return !isset($_SERVER['HTTP_USER_AGENT'])
                || preg_match('{\bFirePHP/\d+\.\d+\b}', $_SERVER['HTTP_USER_AGENT'])
                || isset($_SERVER['HTTP_X_FIREPHP_VERSION']);
+    }
+
+    /**
+     * BC getter for the sendHeaders property that has been made static
+     */
+    public function __get($property)
+    {
+        if ('sendHeaders' !== $property) {
+            throw new \InvalidArgumentException('Undefined property '.$property);
+        }
+
+        return static::$sendHeaders;
+    }
+
+    /**
+     * BC setter for the sendHeaders property that has been made static
+     */
+    public function __set($property, $value)
+    {
+        if ('sendHeaders' !== $property) {
+            throw new \InvalidArgumentException('Undefined property '.$property);
+        }
+
+        static::$sendHeaders = $value;
     }
 }
