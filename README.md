@@ -1,5 +1,7 @@
 # kitFramework
 
+![kitFramework](https://raw.github.com/phpManufaktur/kitFramework/master/framework.jpg)
+
 The *kitFramework* extends existing Content Management Systems.
 
 For **Developers and Web designers** the *kitFramework*
