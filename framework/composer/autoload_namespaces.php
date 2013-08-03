@@ -38,5 +38,6 @@ return array(
     'phpManufaktur' => $baseDir . '/extension/phpmanufaktur/',
     'thirdParty' => $baseDir . '/extension/thirdparty/',
     'dflydev' => $baseDir . '/extension/framework/dflydev/',
-    'Nicl' => $baseDir . '/extension/framework/nicl/'
+    'Nicl' => $baseDir . '/extension/framework/nicl/',
+    'Carbon' => $baseDir . '/extension/framework/carbon/',
 );

@@ -5,7 +5,8 @@ In the file /framework/composer/autoload_namespaces.php are added the lines:
     'phpManufaktur' => $baseDir . '/extension/phpmanufaktur/',
     'thirdParty' => $baseDir . '/extension/thirdparty/',
     'dflydev' => $baseDir . '/extension/framework/dflydev/',
-    'Nicl' => $baseDir . '/extension/framework/nicl/'
+    'Nicl' => $baseDir . '/extension/framework/nicl/',
+    'Carbon' => $baseDir . '/extension/framework/carbon/',
 
 to grant the auto loading for the kitFramework.
 

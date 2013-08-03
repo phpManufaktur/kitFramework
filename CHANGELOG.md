@@ -6,6 +6,10 @@ MIT License (MIT) - <http://www.opensource.org/licenses/MIT>
 
 kitFramework - <https://kit2.phpmanufaktur.de>
 
+**0.21** - 2013-08-03
+
+* added the Carbon extension for DateTime (1.2.0, @Carbon)
+
 **0.20** - 2013-08-01
 
 * upgraded to the Silex framework 1.1.0 (2013-05-04)
