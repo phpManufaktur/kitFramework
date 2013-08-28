@@ -6,6 +6,10 @@ MIT License (MIT) - <http://www.opensource.org/licenses/MIT>
 
 kitFramework - <https://kit2.phpmanufaktur.de>
 
+**0.23** - 2013-08-28
+
+* updated the Carbon extension to 1.3.0
+
 **0.21** - 2013-08-03
 
 * added the Carbon extension for DateTime (1.2.0, @Carbon)
