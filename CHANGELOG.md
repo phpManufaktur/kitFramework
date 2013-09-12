@@ -6,6 +6,11 @@ MIT License (MIT) - <http://www.opensource.org/licenses/MIT>
 
 kitFramework - <https://kit2.phpmanufaktur.de>
 
+**0.24** - 2013-09-12
+
+* updated the Carbon extension to 1.4.0
+* added hint for usage of `FallbackResource` in `.htaccess`
+
 **0.23** - 2013-08-28
 
 * updated the Carbon extension to 1.3.0
