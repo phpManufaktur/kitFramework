@@ -6,6 +6,11 @@ MIT License (MIT) - <http://www.opensource.org/licenses/MIT>
 
 kitFramework - <https://kit2.phpmanufaktur.de>
 
+**0.26** - 2013-09-20
+
+* changed template handling
+* changed authentication handling
+
 **0.25** - 2013-09-16
 
 * fixed invalid namespace for Carbon 
