@@ -1,6 +1,7 @@
 {
   "release": {
     "number":"0.26",
-    "date":"2013-09-20"
+    "date":"2013-09-20",
+    "status" : "beta"
   }
 }
