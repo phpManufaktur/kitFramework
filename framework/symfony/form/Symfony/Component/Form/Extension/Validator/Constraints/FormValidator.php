@@ -15,6 +15,8 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\Extension\Validator\Util\ServerParams;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
@@ -42,12 +44,21 @@ class FormValidator extends ConstraintValidator
      */
     public function validate($form, Constraint $constraint)
     {
+        if (!$constraint instanceof Form) {
+            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\Form');
+        }
+
         if (!$form instanceof FormInterface) {
             return;
         }
 
         /* @var FormInterface $form */
         $config = $form->getConfig();
+        $validator = null;
+
+        if ($this->context instanceof ExecutionContextInterface) {
+            $validator = $this->context->getValidator()->inContext($this->context);
+        }
 
         if ($form->isSynchronized()) {
             // Validate the form data only if transformation succeeded
@@ -56,7 +67,12 @@ class FormValidator extends ConstraintValidator
             // Validate the data against its own constraints
             if (self::allowDataWalking($form)) {
                 foreach ($groups as $group) {
-                    $this->context->validate($form->getData(), 'data', $group, true);
+                    if ($validator) {
+                        $validator->atPath('data')->validate($form->getData(), null, $group);
+                    } else {
+                        // 2.4 API
+                        $this->context->validate($form->getData(), 'data', $group, true);
+                    }
                 }
             }
 
@@ -66,7 +82,12 @@ class FormValidator extends ConstraintValidator
             foreach ($constraints as $constraint) {
                 foreach ($groups as $group) {
                     if (in_array($group, $constraint->groups)) {
-                        $this->context->validateValue($form->getData(), $constraint, 'data', $group);
+                        if ($validator) {
+                            $validator->atPath('data')->validate($form->getData(), $constraint, $group);
+                        } else {
+                            // 2.4 API
+                            $this->context->validateValue($form->getData(), $constraint, 'data', $group);
+                        }
 
                         // Prevent duplicate validation
                         continue 2;
@@ -95,23 +116,40 @@ class FormValidator extends ConstraintValidator
                     ? (string) $form->getViewData()
                     : gettype($form->getViewData());
 
-                $this->context->addViolation(
-                    $config->getOption('invalid_message'),
-                    array_replace(array('{{ value }}' => $clientDataAsString), $config->getOption('invalid_message_parameters')),
-                    $form->getViewData(),
-                    null,
-                    Form::ERR_INVALID
-                );
+                if ($this->context instanceof ExecutionContextInterface) {
+                    $this->context->buildViolation($config->getOption('invalid_message'))
+                        ->setParameters(array_replace(array('{{ value }}' => $clientDataAsString), $config->getOption('invalid_message_parameters')))
+                        ->setInvalidValue($form->getViewData())
+                        ->setCode(Form::ERR_INVALID)
+                        ->addViolation();
+                } else {
+                    // 2.4 API
+                    $this->context->addViolation(
+                        $config->getOption('invalid_message'),
+                        array_replace(array('{{ value }}' => $clientDataAsString), $config->getOption('invalid_message_parameters')),
+                        $form->getViewData(),
+                        null,
+                        Form::ERR_INVALID
+                    );
+                }
             }
         }
 
         // Mark the form with an error if it contains extra fields
         if (count($form->getExtraData()) > 0) {
-            $this->context->addViolation(
-                $config->getOption('extra_fields_message'),
-                array('{{ extra_fields }}' => implode('", "', array_keys($form->getExtraData()))),
-                $form->getExtraData()
-            );
+            if ($this->context instanceof ExecutionContextInterface) {
+                $this->context->buildViolation($config->getOption('extra_fields_message'))
+                    ->setParameter('{{ extra_fields }}', implode('", "', array_keys($form->getExtraData())))
+                    ->setInvalidValue($form->getExtraData())
+                    ->addViolation();
+            } else {
+                // 2.4 API
+                $this->context->addViolation(
+                    $config->getOption('extra_fields_message'),
+                    array('{{ extra_fields }}' => implode('", "', array_keys($form->getExtraData()))),
+                    $form->getExtraData()
+                );
+            }
         }
 
         // Mark the form with an error if the uploaded size was too large
@@ -120,12 +158,20 @@ class FormValidator extends ConstraintValidator
         if ($form->isRoot() && null !== $length) {
             $max = $this->serverParams->getPostMaxSize();
 
-            if (null !== $max && $length > $max) {
-                $this->context->addViolation(
-                    $config->getOption('post_max_size_message'),
-                    array('{{ max }}' => $this->serverParams->getNormalizedIniPostMaxSize()),
-                    $length
-                );
+            if (!empty($max) && $length > $max) {
+                if ($this->context instanceof ExecutionContextInterface) {
+                    $this->context->buildViolation($config->getOption('post_max_size_message'))
+                        ->setParameter('{{ max }}', $this->serverParams->getNormalizedIniPostMaxSize())
+                        ->setInvalidValue($length)
+                        ->addViolation();
+                } else {
+                    // 2.4 API
+                    $this->context->addViolation(
+                        $config->getOption('post_max_size_message'),
+                        array('{{ max }}' => $this->serverParams->getNormalizedIniPostMaxSize()),
+                        $length
+                    );
+                }
             }
         }
     }
@@ -135,7 +181,7 @@ class FormValidator extends ConstraintValidator
      *
      * @param  FormInterface $form The form to test.
      *
-     * @return Boolean Whether the graph walker may walk the data.
+     * @return bool    Whether the graph walker may walk the data.
      */
     private static function allowDataWalking(FormInterface $form)
     {
@@ -171,20 +217,48 @@ class FormValidator extends ConstraintValidator
      */
     private static function getValidationGroups(FormInterface $form)
     {
+        // Determine the clicked button of the complete form tree
+        $clickedButton = null;
+
+        if (method_exists($form, 'getClickedButton')) {
+            $clickedButton = $form->getClickedButton();
+        }
+
+        if (null !== $clickedButton) {
+            $groups = $clickedButton->getConfig()->getOption('validation_groups');
+
+            if (null !== $groups) {
+                return self::resolveValidationGroups($groups, $form);
+            }
+        }
+
         do {
             $groups = $form->getConfig()->getOption('validation_groups');
 
             if (null !== $groups) {
-                if (is_callable($groups)) {
-                    $groups = call_user_func($groups, $form);
-                }
-
-                return (array) $groups;
+                return self::resolveValidationGroups($groups, $form);
             }
 
             $form = $form->getParent();
         } while (null !== $form);
 
         return array(Constraint::DEFAULT_GROUP);
+    }
+
+    /**
+     * Post-processes the validation groups option for a given form.
+     *
+     * @param array|callable $groups The validation groups.
+     * @param FormInterface  $form   The validated form.
+     *
+     * @return array The validation groups.
+     */
+    private static function resolveValidationGroups($groups, FormInterface $form)
+    {
+        if (!is_string($groups) && is_callable($groups)) {
+            $groups = call_user_func($groups, $form);
+        }
+
+        return (array) $groups;
     }
 }

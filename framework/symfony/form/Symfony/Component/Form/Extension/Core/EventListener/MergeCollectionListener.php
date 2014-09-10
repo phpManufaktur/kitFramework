@@ -23,23 +23,23 @@ class MergeCollectionListener implements EventSubscriberInterface
 {
     /**
      * Whether elements may be added to the collection
-     * @var Boolean
+     * @var bool
      */
     private $allowAdd;
 
     /**
      * Whether elements may be removed from the collection
-     * @var Boolean
+     * @var bool
      */
     private $allowDelete;
 
     /**
      * Creates a new listener.
      *
-     * @param Boolean $allowAdd Whether values might be added to the
-     *                                collection.
-     * @param Boolean $allowDelete Whether values might be removed from the
-     *                                collection.
+     * @param bool $allowAdd    Whether values might be added to the
+     *                          collection.
+     * @param bool $allowDelete Whether values might be removed from the
+     *                          collection.
      */
     public function __construct($allowAdd = false, $allowDelete = false)
     {
@@ -50,11 +50,11 @@ class MergeCollectionListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            FormEvents::BIND => 'onBind',
+            FormEvents::SUBMIT => 'onSubmit',
         );
     }
 
-    public function onBind(FormEvent $event)
+    public function onSubmit(FormEvent $event)
     {
         $dataToMergeInto = $event->getForm()->getNormData();
         $data = $event->getData();
@@ -122,5 +122,16 @@ class MergeCollectionListener implements EventSubscriberInterface
         }
 
         $event->setData($dataToMergeInto);
+    }
+
+    /**
+     * Alias of {@link onSubmit()}.
+     *
+     * @deprecated Deprecated since version 2.3, to be removed in 3.0. Use
+     *             {@link onSubmit()} instead.
+     */
+    public function onBind(FormEvent $event)
+    {
+        $this->onSubmit($event);
     }
 }

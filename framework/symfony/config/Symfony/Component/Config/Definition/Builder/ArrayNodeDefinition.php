@@ -22,36 +22,28 @@ use Symfony\Component\Config\Definition\Exception\InvalidDefinitionException;
  */
 class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinitionInterface
 {
-    protected $performDeepMerging;
-    protected $ignoreExtraKeys;
-    protected $children;
+    protected $performDeepMerging = true;
+    protected $ignoreExtraKeys = false;
+    protected $children = array();
     protected $prototype;
-    protected $atLeastOne;
-    protected $allowNewKeys;
+    protected $atLeastOne = false;
+    protected $allowNewKeys = true;
     protected $key;
     protected $removeKeyItem;
-    protected $addDefaults;
-    protected $addDefaultChildren;
+    protected $addDefaults = false;
+    protected $addDefaultChildren = false;
     protected $nodeBuilder;
-    protected $normalizeKeys;
+    protected $normalizeKeys = true;
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function __construct($name, NodeParentInterface $parent = null)
     {
         parent::__construct($name, $parent);
 
-        $this->children = array();
-        $this->addDefaults = false;
-        $this->addDefaultChildren = false;
-        $this->allowNewKeys = true;
-        $this->atLeastOne = false;
-        $this->allowEmptyValue = true;
-        $this->performDeepMerging = true;
         $this->nullEquivalent = array();
         $this->trueEquivalent = array();
-        $this->normalizeKeys = true;
     }
 
     /**
@@ -105,7 +97,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
     /**
      * Adds children with a default value when none are defined.
      *
-     * @param integer|string|array|null $children The number of children|The child name|The children names to be added
+     * @param int|string|array|null     $children The number of children|The child name|The children names to be added
      *
      * This method is applicable to prototype nodes only.
      *
@@ -185,7 +177,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
      * This method is applicable to prototype nodes only.
      *
      * @param string  $name          The name of the key
-     * @param Boolean $removeKeyItem Whether or not the key item should be removed.
+     * @param bool    $removeKeyItem Whether or not the key item should be removed.
      *
      * @return ArrayNodeDefinition
      */
@@ -200,7 +192,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
     /**
      * Sets whether the node can be unset.
      *
-     * @param Boolean $allow
+     * @param bool    $allow
      *
      * @return ArrayNodeDefinition
      */
@@ -235,7 +227,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
             ->treatNullLike(array('enabled' => true))
             ->beforeNormalization()
                 ->ifArray()
-                ->then(function($v) {
+                ->then(function ($v) {
                     $v['enabled'] = isset($v['enabled']) ? $v['enabled'] : true;
 
                     return $v;
@@ -303,13 +295,13 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
     /**
      * Sets key normalization.
      *
-     * @param Boolean $bool Whether to enable key normalization
+     * @param bool    $bool Whether to enable key normalization
      *
      * @return ArrayNodeDefinition
      */
     public function normalizeKeys($bool)
     {
-        $this->normalizeKeys = (Boolean) $bool;
+        $this->normalizeKeys = (bool) $bool;
 
         return $this;
     }
@@ -351,7 +343,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function createNode()
     {

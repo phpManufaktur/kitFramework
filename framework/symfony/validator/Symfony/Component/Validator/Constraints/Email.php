@@ -15,6 +15,9 @@ use Symfony\Component\Validator\Constraint;
 
 /**
  * @Annotation
+ * @Target({"PROPERTY", "METHOD", "ANNOTATION"})
+ *
+ * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @api
  */
@@ -23,4 +26,5 @@ class Email extends Constraint
     public $message = 'This value is not a valid email address.';
     public $checkMX = false;
     public $checkHost = false;
+    public $strict = null;
 }

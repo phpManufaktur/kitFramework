@@ -16,6 +16,9 @@ use Symfony\Component\Validator\Exception\MissingOptionsException;
 
 /**
  * @Annotation
+ * @Target({"PROPERTY", "METHOD", "ANNOTATION"})
+ *
+ * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @api
  */
@@ -39,7 +42,7 @@ class Count extends Constraint
         parent::__construct($options);
 
         if (null === $this->min && null === $this->max) {
-            throw new MissingOptionsException('Either option "min" or "max" must be given for constraint ' . __CLASS__, array('min', 'max'));
+            throw new MissingOptionsException(sprintf('Either option "min" or "max" must be given for constraint %s', __CLASS__), array('min', 'max'));
         }
     }
 }

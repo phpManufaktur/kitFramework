@@ -22,6 +22,10 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
  */
 class AccessDecisionManager implements AccessDecisionManagerInterface
 {
+    const STRATEGY_AFFIRMATIVE = 'affirmative';
+    const STRATEGY_CONSENSUS   = 'consensus';
+    const STRATEGY_UNANIMOUS   = 'unanimous';
+
     private $voters;
     private $strategy;
     private $allowIfAllAbstainDecisions;
@@ -32,21 +36,26 @@ class AccessDecisionManager implements AccessDecisionManagerInterface
      *
      * @param VoterInterface[] $voters                             An array of VoterInterface instances
      * @param string           $strategy                           The vote strategy
-     * @param Boolean          $allowIfAllAbstainDecisions         Whether to grant access if all voters abstained or not
-     * @param Boolean          $allowIfEqualGrantedDeniedDecisions Whether to grant access if result are equals
+     * @param bool             $allowIfAllAbstainDecisions         Whether to grant access if all voters abstained or not
+     * @param bool             $allowIfEqualGrantedDeniedDecisions Whether to grant access if result are equals
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct(array $voters, $strategy = 'affirmative', $allowIfAllAbstainDecisions = false, $allowIfEqualGrantedDeniedDecisions = true)
+    public function __construct(array $voters, $strategy = self::STRATEGY_AFFIRMATIVE, $allowIfAllAbstainDecisions = false, $allowIfEqualGrantedDeniedDecisions = true)
     {
         if (!$voters) {
             throw new \InvalidArgumentException('You must at least add one voter.');
         }
 
+        $strategyMethod = 'decide'.ucfirst($strategy);
+        if (!is_callable(array($this, $strategyMethod))) {
+            throw new \InvalidArgumentException(sprintf('The strategy "%s" is not supported.', $strategy));
+        }
+
         $this->voters = $voters;
-        $this->strategy = 'decide'.ucfirst($strategy);
-        $this->allowIfAllAbstainDecisions = (Boolean) $allowIfAllAbstainDecisions;
-        $this->allowIfEqualGrantedDeniedDecisions = (Boolean) $allowIfEqualGrantedDeniedDecisions;
+        $this->strategy = $strategyMethod;
+        $this->allowIfAllAbstainDecisions = (bool) $allowIfAllAbstainDecisions;
+        $this->allowIfEqualGrantedDeniedDecisions = (bool) $allowIfEqualGrantedDeniedDecisions;
     }
 
     /**

@@ -16,6 +16,9 @@ use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
 
 /**
  * @Annotation
+ * @Target({"PROPERTY", "METHOD", "ANNOTATION"})
+ *
+ * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @api
  */
@@ -24,7 +27,7 @@ class All extends Constraint
     public $constraints = array();
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function __construct($options = null)
     {
@@ -36,11 +39,11 @@ class All extends Constraint
 
         foreach ($this->constraints as $constraint) {
             if (!$constraint instanceof Constraint) {
-                throw new ConstraintDefinitionException('The value ' . $constraint . ' is not an instance of Constraint in constraint ' . __CLASS__);
+                throw new ConstraintDefinitionException(sprintf('The value %s is not an instance of Constraint in constraint %s', $constraint, __CLASS__));
             }
 
             if ($constraint instanceof Valid) {
-                throw new ConstraintDefinitionException('The constraint Valid cannot be nested inside constraint ' . __CLASS__ . '. You can only declare the Valid constraint directly on a field or method.');
+                throw new ConstraintDefinitionException(sprintf('The constraint Valid cannot be nested inside constraint %s. You can only declare the Valid constraint directly on a field or method.', __CLASS__));
             }
         }
     }

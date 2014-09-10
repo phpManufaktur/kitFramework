@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\Validator;
 
-use Symfony\Component\Validator\Exception\ValidatorException;
-
 /**
  * Base class for constraint validators
  *
@@ -23,97 +21,140 @@ use Symfony\Component\Validator\Exception\ValidatorException;
 abstract class ConstraintValidator implements ConstraintValidatorInterface
 {
     /**
+     * Whether to format {@link \DateTime} objects as RFC-3339 dates
+     * ("Y-m-d H:i:s").
+     *
+     * @var integer
+     */
+    const PRETTY_DATE = 1;
+
+    /**
+     * Whether to cast objects with a "__toString()" method to strings.
+     *
+     * @var integer
+     */
+    const OBJECT_TO_STRING = 2;
+
+    /**
      * @var ExecutionContextInterface
      */
     protected $context;
 
     /**
-     * @var string
-     *
-     * @deprecated
-     */
-    private $messageTemplate;
-
-    /**
-     * @var array
-     *
-     * @deprecated
-     */
-    private $messageParameters;
-
-    /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function initialize(ExecutionContextInterface $context)
     {
         $this->context = $context;
-        $this->messageTemplate = '';
-        $this->messageParameters = array();
     }
 
     /**
-     * {@inheritDoc}
+     * Returns a string representation of the type of the value.
      *
-     * @deprecated Deprecated since version 2.1, to be removed in 2.3.
+     * This method should be used if you pass the type of a value as
+     * message parameter to a constraint violation. Note that such
+     * parameters should usually not be included in messages aimed at
+     * non-technical people.
+     *
+     * @param mixed $value The value to return the type of
+     *
+     * @return string The type of the value
      */
-    public function getMessageTemplate()
+    protected function formatTypeOf($value)
     {
-        trigger_error('getMessageTemplate() is deprecated since version 2.1 and will be removed in 2.3.', E_USER_DEPRECATED);
-
-        return $this->messageTemplate;
+        return is_object($value) ? get_class($value) : gettype($value);
     }
 
     /**
-     * {@inheritDoc}
+     * Returns a string representation of the value.
      *
-     * @deprecated Deprecated since version 2.1, to be removed in 2.3.
-     */
-    public function getMessageParameters()
-    {
-        trigger_error('getMessageParameters() is deprecated since version 2.1 and will be removed in 2.3.', E_USER_DEPRECATED);
-
-        return $this->messageParameters;
-    }
-
-    /**
-     * Wrapper for $this->context->addViolation()
+     * This method returns the equivalent PHP tokens for most scalar types
+     * (i.e. "false" for false, "1" for 1 etc.). Strings are always wrapped
+     * in double quotes ("). Objects, arrays and resources are formatted as
+     * "object", "array" and "resource". If the parameter $prettyDateTime
+     * is set to true, {@link \DateTime} objects will be formatted as
+     * RFC-3339 dates ("Y-m-d H:i:s").
      *
-     * @deprecated Deprecated since version 2.1, to be removed in 2.3.
+     * Be careful when passing message parameters to a constraint violation
+     * that (may) contain objects, arrays or resources. These parameters
+     * should only be displayed for technical users. Non-technical users
+     * won't know what an "object", "array" or "resource" is and will be
+     * confused by the violation message.
+     *
+     * @param mixed   $value  The value to format as string
+     * @param integer $format A bitwise combination of the format
+     *                        constants in this class
+     *
+     * @return string The string representation of the passed value
      */
-    protected function setMessage($template, array $parameters = array())
+    protected function formatValue($value, $format = 0)
     {
-        trigger_error('setMessage() is deprecated since version 2.1 and will be removed in 2.3.', E_USER_DEPRECATED);
+        if (($format & self::PRETTY_DATE) && $value instanceof \DateTime) {
+            if (class_exists('IntlDateFormatter')) {
+                $locale = \Locale::getDefault();
+                $formatter = new \IntlDateFormatter($locale, \IntlDateFormatter::MEDIUM, \IntlDateFormatter::SHORT);
 
-        $this->messageTemplate = $template;
-        $this->messageParameters = $parameters;
+                return $formatter->format($value);
+            }
 
-        if (!$this->context instanceof ExecutionContext) {
-            throw new ValidatorException('ConstraintValidator::initialize() must be called before setting violation messages');
+            return $value->format('Y-m-d H:i:s');
         }
 
-        $this->context->addViolation($template, $parameters);
+        if (is_object($value)) {
+            if ($format & self::OBJECT_TO_STRING && method_exists($value, '__toString')) {
+                return $value->__toString();
+            }
+
+            return 'object';
+        }
+
+        if (is_array($value)) {
+            return 'array';
+        }
+
+        if (is_string($value)) {
+            return '"'.$value.'"';
+        }
+
+        if (is_resource($value)) {
+            return 'resource';
+        }
+
+        if (null === $value) {
+            return 'null';
+        }
+
+        if (false === $value) {
+            return 'false';
+        }
+
+        if (true === $value) {
+            return 'true';
+        }
+
+        return (string) $value;
     }
 
     /**
-     * Stub implementation delegating to the deprecated isValid method.
+     * Returns a string representation of a list of values.
      *
-     * This stub exists for BC and will be dropped in Symfony 2.3.
+     * Each of the values is converted to a string using
+     * {@link formatValue()}. The values are then concatenated with commas.
      *
-     * @see ConstraintValidatorInterface::validate
+     * @param array   $values A list of values
+     * @param integer $format A bitwise combination of the format
+     *                        constants in this class
+     *
+     * @return string The string representation of the value list
+     *
+     * @see formatValue()
      */
-    public function validate($value, Constraint $constraint)
+    protected function formatValues(array $values, $format = 0)
     {
-        trigger_error('isValid() is deprecated since version 2.1 and will be removed in 2.3. Implement validate() instead.', E_USER_DEPRECATED);
+        foreach ($values as $key => $value) {
+            $values[$key] = $this->formatValue($value, $format);
+        }
 
-        return $this->isValid($value, $constraint);
-    }
-
-    /**
-     * BC variant of validate.
-     *
-     * @deprecated Deprecated since version 2.1, to be removed in 2.3.
-     */
-    protected function isValid($value, Constraint $constraint)
-    {
+        return implode(', ', $values);
     }
 }

@@ -20,6 +20,9 @@ use Symfony\Component\Translation\TranslatorInterface;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated Deprecated since version 2.5, to be removed in Symfony 3.0.
+ *             Use {@link Context\ExecutionContext} instead.
  */
 class ExecutionContext implements ExecutionContextInterface
 {
@@ -87,13 +90,13 @@ class ExecutionContext implements ExecutionContextInterface
     /**
      * {@inheritdoc}
      */
-    public function addViolation($message, array $params = array(), $invalidValue = null, $pluralization = null, $code = null)
+    public function addViolation($message, array $params = array(), $invalidValue = null, $plural = null, $code = null)
     {
-        if (null === $pluralization) {
+        if (null === $plural) {
             $translatedMessage = $this->translator->trans($message, $params, $this->translationDomain);
         } else {
             try {
-                $translatedMessage = $this->translator->transChoice($message, $pluralization, $params, $this->translationDomain);
+                $translatedMessage = $this->translator->transChoice($message, $plural, $params, $this->translationDomain);
             } catch (\InvalidArgumentException $e) {
                 $translatedMessage = $this->translator->trans($message, $params, $this->translationDomain);
             }
@@ -107,85 +110,27 @@ class ExecutionContext implements ExecutionContextInterface
             $this->propertyPath,
             // check using func_num_args() to allow passing null values
             func_num_args() >= 3 ? $invalidValue : $this->value,
-            $pluralization,
+            $plural,
             $code
         ));
-    }
-
-    /**
-     * Adds a violation at the validation graph node with the given property
-     * path.
-     *
-     * @param string       $propertyPath  The property path for the violation.
-     * @param string       $message       The error message.
-     * @param array        $params        The parameters parsed into the error message.
-     * @param mixed        $invalidValue  The invalid, validated value.
-     * @param integer|null $pluralization The number to use to pluralize of the message.
-     * @param integer|null $code          The violation code.
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3.
-     */
-    public function addViolationAtPath($propertyPath, $message, array $params = array(), $invalidValue = null, $pluralization = null, $code = null)
-    {
-        trigger_error('addViolationAtPath() is deprecated since version 2.2 and will be removed in 2.3.', E_USER_DEPRECATED);
-
-        $this->globalContext->getViolations()->add(new ConstraintViolation(
-            null === $pluralization
-                ? $this->translator->trans($message, $params, $this->translationDomain)
-                : $this->translator->transChoice($message, $pluralization, $params, $this->translationDomain),
-            $message,
-            $params,
-            $this->globalContext->getRoot(),
-            $propertyPath,
-            // check using func_num_args() to allow passing null values
-            func_num_args() >= 4 ? $invalidValue : $this->value,
-            $pluralization,
-            $code
-        ));
-    }
-
-    /**
-     * Adds a violation at the validation graph node with the given property
-     * path relative to the current property path.
-     *
-     * @param string       $subPath       The relative property path for the violation.
-     * @param string       $message       The error message.
-     * @param array        $params        The parameters parsed into the error message.
-     * @param mixed        $invalidValue  The invalid, validated value.
-     * @param integer|null $pluralization The number to use to pluralize of the message.
-     * @param integer|null $code          The violation code.
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3. Use the
-     *             method {@link addViolationAt} instead.
-     */
-    public function addViolationAtSubPath($subPath, $message, array $params = array(), $invalidValue = null, $pluralization = null, $code = null)
-    {
-        trigger_error('addViolationAtSubPath() is deprecated since version 2.2 and will be removed in 2.3. Use addViolationAt() instead.', E_USER_DEPRECATED);
-
-        if (func_num_args() >= 4) {
-            $this->addViolationAt($subPath, $message, $params, $invalidValue, $pluralization, $code);
-        } else {
-            // Needed in order to make the check for func_num_args() inside work
-            $this->addViolationAt($subPath, $message, $params);
-        }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function addViolationAt($subPath, $message, array $params = array(), $invalidValue = null, $pluralization = null, $code = null)
+    public function addViolationAt($subPath, $message, array $parameters = array(), $invalidValue = null, $plural = null, $code = null)
     {
         $this->globalContext->getViolations()->add(new ConstraintViolation(
-            null === $pluralization
-                ? $this->translator->trans($message, $params, $this->translationDomain)
-                : $this->translator->transChoice($message, $pluralization, $params, $this->translationDomain),
+            null === $plural
+                ? $this->translator->trans($message, $parameters, $this->translationDomain)
+                : $this->translator->transChoice($message, $plural, $parameters, $this->translationDomain),
             $message,
-            $params,
+            $parameters,
             $this->globalContext->getRoot(),
             $this->getPropertyPath($subPath),
             // check using func_num_args() to allow passing null values
             func_num_args() >= 4 ? $invalidValue : $this->value,
-            $pluralization,
+            $plural,
             $code
         ));
     }
@@ -212,10 +157,10 @@ class ExecutionContext implements ExecutionContextInterface
     public function getPropertyPath($subPath = '')
     {
         if ('' != $subPath && '' !== $this->propertyPath && '[' !== $subPath[0]) {
-            return $this->propertyPath . '.' . $subPath;
+            return $this->propertyPath.'.'.$subPath;
         }
 
-        return $this->propertyPath . $subPath;
+        return $this->propertyPath.$subPath;
     }
 
     /**
@@ -226,8 +171,6 @@ class ExecutionContext implements ExecutionContextInterface
         if ($this->metadata instanceof ClassBasedInterface) {
             return $this->metadata->getClassName();
         }
-
-        return null;
     }
 
     /**
@@ -238,8 +181,6 @@ class ExecutionContext implements ExecutionContextInterface
         if ($this->metadata instanceof PropertyMetadataInterface) {
             return $this->metadata->getPropertyName();
         }
-
-        return null;
     }
 
     /**
@@ -310,74 +251,6 @@ class ExecutionContext implements ExecutionContextInterface
             $context->propertyPath = $propertyPath;
             $context->executeConstraintValidators($value, $constraints);
         }
-    }
-
-    /**
-     * Returns the class name of the current node.
-     *
-     * @return string|null The class name or null, if the current node does not
-     *                     hold information about a class.
-     *
-     * @see getClassName
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3. Use
-     *             {@link getClassName} instead.
-     */
-    public function getCurrentClass()
-    {
-        trigger_error('getCurrentClass() is deprecated since version 2.2 and will be removed in 2.3. Use getClassName() instead', E_USER_DEPRECATED);
-
-        return $this->getClassName();
-    }
-
-    /**
-     * Returns the property name of the current node.
-     *
-     * @return string|null The property name or null, if the current node does
-     *                     not hold information about a property.
-     *
-     * @see getPropertyName
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3. Use
-     *             {@link getClassName} instead.
-     */
-    public function getCurrentProperty()
-    {
-        trigger_error('getCurrentProperty() is deprecated since version 2.2 and will be removed in 2.3. Use getClassName() instead', E_USER_DEPRECATED);
-
-        return $this->getPropertyName();
-    }
-
-    /**
-     * Returns the currently validated value.
-     *
-     * @return mixed The current value.
-     *
-     * @see getValue
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3. Use
-     *             {@link getValue} instead.
-     */
-    public function getCurrentValue()
-    {
-        trigger_error('getCurrentValue() is deprecated since version 2.2 and will be removed in 2.3. Use getValue() instead', E_USER_DEPRECATED);
-
-        return $this->value;
-    }
-
-    /**
-     * Returns the graph walker instance.
-     *
-     * @return GraphWalker The graph walker.
-     *
-     * @deprecated Deprecated since version 2.2, to be removed in 2.3. Use
-     *             {@link validate} and {@link validateValue} instead.
-     */
-    public function getGraphWalker()
-    {
-        trigger_error('getGraphWalker() is deprecated since version 2.2 and will be removed in 2.3. Use validate() and validateValue() instead', E_USER_DEPRECATED);
-
-        return $this->globalContext->getVisitor()->getGraphWalker();
     }
 
     /**

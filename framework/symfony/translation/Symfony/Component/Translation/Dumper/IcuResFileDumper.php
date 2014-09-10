@@ -18,38 +18,15 @@ use Symfony\Component\Translation\MessageCatalogue;
  *
  * @author Stealth35
  */
-class IcuResFileDumper implements DumperInterface
+class IcuResFileDumper extends FileDumper
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function dump(MessageCatalogue $messages, $options = array())
-    {
-        if (!array_key_exists('path', $options)) {
-            throw new \InvalidArgumentException('The file dumper need a path options.');
-        }
-
-        // save a file for each domain
-        foreach ($messages->getDomains() as $domain) {
-            $file = $messages->getLocale().'.'.$this->getExtension();
-            $path = $options['path'].'/'.$domain.'/';
-
-            if (!file_exists($path)) {
-                mkdir($path);
-            }
-
-            // backup
-            if (file_exists($path.$file)) {
-                copy($path.$file, $path.$file.'~');
-            }
-
-            // save file
-            file_put_contents($path.$file, $this->format($messages, $domain));
-        }
-    }
+    protected $relativePathTemplate = '%domain%/%locale%.%extension%';
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function format(MessageCatalogue $messages, $domain = 'messages')
     {
@@ -68,17 +45,17 @@ class IcuResFileDumper implements DumperInterface
             $resources .= pack('V', $this->getPosition($data));
 
             $data .= pack('V', strlen($target))
-                  .  mb_convert_encoding($target."\0", 'UTF-16LE', 'UTF-8')
-                  .  $this->writePadding($data)
+                .mb_convert_encoding($target."\0", 'UTF-16LE', 'UTF-8')
+                .$this->writePadding($data)
                   ;
         }
 
         $resOffset = $this->getPosition($data);
 
         $data .= pack('v', count($messages))
-              .  $indexes
-              .  $this->writePadding($data)
-              .  $resources
+            .$indexes
+            .$this->writePadding($data)
+            .$resources
               ;
 
         $bundleTop = $this->getPosition($data);
@@ -103,8 +80,8 @@ class IcuResFileDumper implements DumperInterface
         );
 
         $output = $header
-                . $root
-                . $data;
+               .$root
+               .$data;
 
         return $output;
     }
@@ -126,7 +103,7 @@ class IcuResFileDumper implements DumperInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function getExtension()
     {

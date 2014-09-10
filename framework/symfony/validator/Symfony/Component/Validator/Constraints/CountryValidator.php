@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Validator\Constraints;
 
+use Symfony\Component\Intl\Intl;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -25,10 +26,14 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class CountryValidator extends ConstraintValidator
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function validate($value, Constraint $constraint)
     {
+        if (!$constraint instanceof Country) {
+            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\Country');
+        }
+
         if (null === $value || '' === $value) {
             return;
         }
@@ -38,9 +43,12 @@ class CountryValidator extends ConstraintValidator
         }
 
         $value = (string) $value;
+        $countries = Intl::getRegionBundle()->getCountryNames();
 
-        if (!in_array($value, \Symfony\Component\Locale\Locale::getCountries())) {
-            $this->context->addViolation($constraint->message, array('{{ value }}' => $value));
+        if (!isset($countries[$value])) {
+            $this->context->addViolation($constraint->message, array(
+                '{{ value }}' => $this->formatValue($value),
+            ));
         }
     }
 }

@@ -11,9 +11,9 @@
 
 namespace Symfony\Component\Validator\Mapping\Loader;
 
+use Symfony\Component\Config\Util\XmlUtils;
 use Symfony\Component\Validator\Exception\MappingException;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
-use Symfony\Component\Config\Util\XmlUtils;
 
 class XmlFileLoader extends FileLoader
 {
@@ -25,7 +25,7 @@ class XmlFileLoader extends FileLoader
     protected $classes = null;
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function loadClassMetadata(ClassMetadata $metadata)
     {
@@ -105,7 +105,7 @@ class XmlFileLoader extends FileLoader
                 $options = null;
             }
 
-            $constraints[] = $this->newConstraint($node['name'], $options);
+            $constraints[] = $this->newConstraint((string) $node['name'], $options);
         }
 
         return $constraints;
@@ -166,7 +166,10 @@ class XmlFileLoader extends FileLoader
                     $value = array();
                 }
             } else {
-                $value = trim($node);
+                $value = XmlUtils::phpize($node);
+                if (is_string($value)) {
+                    $value = trim($value);
+                }
             }
 
             $options[(string) $node['name']] = $value;
@@ -180,7 +183,7 @@ class XmlFileLoader extends FileLoader
      *
      * @param string $file Path of file
      *
-     * @return SimpleXMLElement
+     * @return \SimpleXMLElement
      *
      * @throws MappingException
      */

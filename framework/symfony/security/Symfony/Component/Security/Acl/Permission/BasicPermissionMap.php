@@ -28,73 +28,78 @@ class BasicPermissionMap implements PermissionMapInterface
     const PERMISSION_MASTER      = 'MASTER';
     const PERMISSION_OWNER       = 'OWNER';
 
-    private $map = array(
-        self::PERMISSION_VIEW => array(
-            MaskBuilder::MASK_VIEW,
-            MaskBuilder::MASK_EDIT,
-            MaskBuilder::MASK_OPERATOR,
-            MaskBuilder::MASK_MASTER,
-            MaskBuilder::MASK_OWNER,
-        ),
+    protected $map;
 
-        self::PERMISSION_EDIT => array(
-            MaskBuilder::MASK_EDIT,
-            MaskBuilder::MASK_OPERATOR,
-            MaskBuilder::MASK_MASTER,
-            MaskBuilder::MASK_OWNER,
-        ),
+    public function __construct()
+    {
+        $this->map = array(
+            self::PERMISSION_VIEW => array(
+                MaskBuilder::MASK_VIEW,
+                MaskBuilder::MASK_EDIT,
+                MaskBuilder::MASK_OPERATOR,
+                MaskBuilder::MASK_MASTER,
+                MaskBuilder::MASK_OWNER,
+            ),
 
-        self::PERMISSION_CREATE => array(
-            MaskBuilder::MASK_CREATE,
-            MaskBuilder::MASK_OPERATOR,
-            MaskBuilder::MASK_MASTER,
-            MaskBuilder::MASK_OWNER,
-        ),
+            self::PERMISSION_EDIT => array(
+                MaskBuilder::MASK_EDIT,
+                MaskBuilder::MASK_OPERATOR,
+                MaskBuilder::MASK_MASTER,
+                MaskBuilder::MASK_OWNER,
+            ),
 
-        self::PERMISSION_DELETE => array(
-            MaskBuilder::MASK_DELETE,
-            MaskBuilder::MASK_OPERATOR,
-            MaskBuilder::MASK_MASTER,
-            MaskBuilder::MASK_OWNER,
-        ),
+            self::PERMISSION_CREATE => array(
+                MaskBuilder::MASK_CREATE,
+                MaskBuilder::MASK_OPERATOR,
+                MaskBuilder::MASK_MASTER,
+                MaskBuilder::MASK_OWNER,
+            ),
 
-        self::PERMISSION_UNDELETE => array(
-            MaskBuilder::MASK_UNDELETE,
-            MaskBuilder::MASK_OPERATOR,
-            MaskBuilder::MASK_MASTER,
-            MaskBuilder::MASK_OWNER,
-        ),
+            self::PERMISSION_DELETE => array(
+                MaskBuilder::MASK_DELETE,
+                MaskBuilder::MASK_OPERATOR,
+                MaskBuilder::MASK_MASTER,
+                MaskBuilder::MASK_OWNER,
+            ),
 
-        self::PERMISSION_OPERATOR => array(
-            MaskBuilder::MASK_OPERATOR,
-            MaskBuilder::MASK_MASTER,
-            MaskBuilder::MASK_OWNER,
-        ),
+            self::PERMISSION_UNDELETE => array(
+                MaskBuilder::MASK_UNDELETE,
+                MaskBuilder::MASK_OPERATOR,
+                MaskBuilder::MASK_MASTER,
+                MaskBuilder::MASK_OWNER,
+            ),
 
-        self::PERMISSION_MASTER => array(
-            MaskBuilder::MASK_MASTER,
-            MaskBuilder::MASK_OWNER,
-        ),
+            self::PERMISSION_OPERATOR => array(
+                MaskBuilder::MASK_OPERATOR,
+                MaskBuilder::MASK_MASTER,
+                MaskBuilder::MASK_OWNER,
+            ),
 
-        self::PERMISSION_OWNER => array(
-            MaskBuilder::MASK_OWNER,
-        ),
-    );
+            self::PERMISSION_MASTER => array(
+                MaskBuilder::MASK_MASTER,
+                MaskBuilder::MASK_OWNER,
+            ),
+
+            self::PERMISSION_OWNER => array(
+                MaskBuilder::MASK_OWNER,
+            ),
+        );
+    }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getMasks($permission, $object)
     {
         if (!isset($this->map[$permission])) {
-            return null;
+            return;
         }
 
         return $this->map[$permission];
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function contains($permission)
     {

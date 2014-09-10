@@ -22,7 +22,7 @@ use Symfony\Component\Translation\Loader\MoFileLoader;
 class MoFileDumper extends FileDumper
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function format(MessageCatalogue $messages, $domain = 'messages')
     {
@@ -52,23 +52,23 @@ class MoFileDumper extends FileDumper
 
         foreach ($offsets as $offset) {
             $sourceOffsets .= $this->writeLong($offset[1])
-                            .  $this->writeLong($offset[0] + $sourcesStart);
+                          .$this->writeLong($offset[0] + $sourcesStart);
             $targetOffsets .= $this->writeLong($offset[3])
-                            .  $this->writeLong($offset[2] + $sourcesStart + $sourcesSize);
+                          .$this->writeLong($offset[2] + $sourcesStart + $sourcesSize);
         }
 
         $output = implode(array_map(array($this, 'writeLong'), $header))
-                . $sourceOffsets
-                . $targetOffsets
-                . $sources
-                . $targets
+               .$sourceOffsets
+               .$targetOffsets
+               .$sources
+               .$targets
                 ;
 
         return $output;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function getExtension()
     {

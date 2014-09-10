@@ -42,7 +42,7 @@ class PropertyPath implements \IteratorAggregate, PropertyPathInterface
 
     /**
      * The number of elements in the property path
-     * @var integer
+     * @var int
      */
     private $length;
 
@@ -118,14 +118,14 @@ class PropertyPath implements \IteratorAggregate, PropertyPathInterface
 
             $position += strlen($matches[1]);
             $remaining = $matches[4];
-            $pattern = '/^(\.(\w+)|\[([^\]]+)\])(.*)/';
+            $pattern = '/^(\.([^\.|\[]+)|\[([^\]]+)\])(.*)/';
         }
 
         if ('' !== $remaining) {
             throw new InvalidPropertyPathException(sprintf(
                 'Could not parse property path "%s". Unexpected token "%s" at position %d',
                 $propertyPath,
-                $remaining{0},
+                $remaining[0],
                 $position
             ));
         }
@@ -155,7 +155,7 @@ class PropertyPath implements \IteratorAggregate, PropertyPathInterface
     public function getParent()
     {
         if ($this->length <= 1) {
-            return null;
+            return;
         }
 
         $parent = clone $this;
@@ -193,7 +193,7 @@ class PropertyPath implements \IteratorAggregate, PropertyPathInterface
     public function getElement($index)
     {
         if (!isset($this->elements[$index])) {
-            throw new OutOfBoundsException('The index ' . $index . ' is not within the property path');
+            throw new OutOfBoundsException(sprintf('The index %s is not within the property path', $index));
         }
 
         return $this->elements[$index];
@@ -205,7 +205,7 @@ class PropertyPath implements \IteratorAggregate, PropertyPathInterface
     public function isProperty($index)
     {
         if (!isset($this->isIndex[$index])) {
-            throw new OutOfBoundsException('The index ' . $index . ' is not within the property path');
+            throw new OutOfBoundsException(sprintf('The index %s is not within the property path', $index));
         }
 
         return !$this->isIndex[$index];
@@ -217,7 +217,7 @@ class PropertyPath implements \IteratorAggregate, PropertyPathInterface
     public function isIndex($index)
     {
         if (!isset($this->isIndex[$index])) {
-            throw new OutOfBoundsException('The index ' . $index . ' is not within the property path');
+            throw new OutOfBoundsException(sprintf('The index %s is not within the property path', $index));
         }
 
         return $this->isIndex[$index];

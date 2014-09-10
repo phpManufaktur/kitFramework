@@ -17,6 +17,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerI
 use Symfony\Component\Security\Http\RememberMe\RememberMeServicesInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\SessionUnavailableException;
 use Psr\Log\LoggerInterface;
@@ -92,6 +93,14 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
         $this->failureHandler = $failureHandler;
         $this->options = array_merge(array(
             'check_path'                     => '/login_check',
+            'login_path'                     => '/login',
+            'always_use_default_target_path' => false,
+            'default_target_path'            => '/',
+            'target_path_parameter'          => '_target_path',
+            'use_referer'                    => false,
+            'failure_path'                   => null,
+            'failure_forward'                => false,
+            'require_previous_session'       => true,
         ), $options);
         $this->logger = $logger;
         $this->dispatcher = $dispatcher;
@@ -129,7 +138,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
         }
 
         try {
-            if (!$request->hasPreviousSession()) {
+            if ($this->options['require_previous_session'] && !$request->hasPreviousSession()) {
                 throw new SessionUnavailableException('Your session has timed out, or you have disabled cookies.');
             }
 
@@ -140,14 +149,14 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
             if ($returnValue instanceof TokenInterface) {
                 $this->sessionStrategy->onAuthentication($request, $returnValue);
 
-                $response = $this->onSuccess($event, $request, $returnValue);
+                $response = $this->onSuccess($request, $returnValue);
             } elseif ($returnValue instanceof Response) {
                 $response = $returnValue;
             } else {
                 throw new \RuntimeException('attemptAuthentication() must either return a Response, an implementation of TokenInterface, or null.');
             }
         } catch (AuthenticationException $e) {
-            $response = $this->onFailure($event, $request, $e);
+            $response = $this->onFailure($request, $e);
         }
 
         $event->setResponse($response);
@@ -156,13 +165,13 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     /**
      * Whether this request requires authentication.
      *
-     * The default implementation only processed requests to a specific path,
+     * The default implementation only processes requests to a specific path,
      * but a subclass could change this to only authenticate requests where a
      * certain parameters is present.
      *
      * @param Request $request
      *
-     * @return Boolean
+     * @return bool
      */
     protected function requiresAuthentication(Request $request)
     {
@@ -180,13 +189,16 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
      */
     abstract protected function attemptAuthentication(Request $request);
 
-    private function onFailure(GetResponseEvent $event, Request $request, AuthenticationException $failed)
+    private function onFailure(Request $request, AuthenticationException $failed)
     {
         if (null !== $this->logger) {
             $this->logger->info(sprintf('Authentication request failed: %s', $failed->getMessage()));
         }
 
-        $this->securityContext->setToken(null);
+        $token = $this->securityContext->getToken();
+        if ($token instanceof UsernamePasswordToken && $this->providerKey === $token->getProviderKey()) {
+            $this->securityContext->setToken(null);
+        }
 
         $response = $this->failureHandler->onAuthenticationFailure($request, $failed);
 
@@ -197,7 +209,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
         return $response;
     }
 
-    private function onSuccess(GetResponseEvent $event, Request $request, TokenInterface $token)
+    private function onSuccess(Request $request, TokenInterface $token)
     {
         if (null !== $this->logger) {
             $this->logger->info(sprintf('User "%s" has been authenticated successfully', $token->getUsername()));

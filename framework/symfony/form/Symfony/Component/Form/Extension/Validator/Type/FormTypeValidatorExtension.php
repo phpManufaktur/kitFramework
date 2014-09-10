@@ -11,18 +11,18 @@
 
 namespace Symfony\Component\Form\Extension\Validator\Type;
 
-use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\Extension\Validator\ViolationMapper\ViolationMapper;
 use Symfony\Component\Form\Extension\Validator\EventListener\ValidationListener;
-use Symfony\Component\Validator\ValidatorInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ValidatorInterface as LegacyValidatorInterface;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class FormTypeValidatorExtension extends AbstractTypeExtension
+class FormTypeValidatorExtension extends BaseValidatorExtension
 {
     /**
      * @var ValidatorInterface
@@ -34,8 +34,15 @@ class FormTypeValidatorExtension extends AbstractTypeExtension
      */
     private $violationMapper;
 
-    public function __construct(ValidatorInterface $validator)
+    /**
+     * @param ValidatorInterface|LegacyValidatorInterface $validator
+     */
+    public function __construct($validator)
     {
+        if (!$validator instanceof ValidatorInterface && !$validator instanceof LegacyValidatorInterface) {
+            throw new \InvalidArgumentException('Validator must be instance of Symfony\Component\Validator\Validator\ValidatorInterface or Symfony\Component\Validator\ValidatorInterface');
+        }
+
         $this->validator = $validator;
         $this->violationMapper = new ViolationMapper();
     }
@@ -53,23 +60,7 @@ class FormTypeValidatorExtension extends AbstractTypeExtension
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
-        // BC clause
-        $constraints = function (Options $options) {
-            return $options['validation_constraint'];
-        };
-
-        // Make sure that validation groups end up as null, closure or array
-        $validationGroupsNormalizer = function (Options $options, $groups) {
-            if (empty($groups)) {
-                return null;
-            }
-
-            if (is_callable($groups)) {
-                return $groups;
-            }
-
-            return (array) $groups;
-        };
+        parent::setDefaultOptions($resolver);
 
         // Constraint should always be converted to an array
         $constraintsNormalizer = function (Options $options, $constraints) {
@@ -78,10 +69,7 @@ class FormTypeValidatorExtension extends AbstractTypeExtension
 
         $resolver->setDefaults(array(
             'error_mapping'              => array(),
-            'validation_groups'          => null,
-            // "validation_constraint" is deprecated. Use "constraints".
-            'validation_constraint'      => null,
-            'constraints'                => $constraints,
+            'constraints'                => array(),
             'cascade_validation'         => false,
             'invalid_message'            => 'This value is not valid.',
             'invalid_message_parameters' => array(),
@@ -90,7 +78,6 @@ class FormTypeValidatorExtension extends AbstractTypeExtension
         ));
 
         $resolver->setNormalizers(array(
-            'validation_groups' => $validationGroupsNormalizer,
             'constraints'       => $constraintsNormalizer,
         ));
     }

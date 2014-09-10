@@ -13,7 +13,6 @@ namespace Silex\Provider;
 
 use Silex\Application;
 use Silex\ServiceProviderInterface;
-
 use Symfony\Component\HttpFoundation\RequestMatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\SecurityContext;
@@ -33,7 +32,6 @@ use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
 use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
 use Symfony\Component\Security\Core\Role\RoleHierarchy;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPasswordValidator;
-use Symfony\Component\Security\Core\Validator\Constraint\UserPasswordValidator as DeprecatedUserPasswordValidator;
 use Symfony\Component\Security\Http\Firewall;
 use Symfony\Component\Security\Http\FirewallMap;
 use Symfony\Component\Security\Http\Firewall\AbstractAuthenticationListener;
@@ -72,6 +70,7 @@ class SecurityServiceProvider implements ServiceProviderInterface
 
         $app['security.role_hierarchy'] = array();
         $app['security.access_rules'] = array();
+        $app['security.hide_user_not_found'] = true;
 
         $app['security'] = $app->share(function ($app) {
             return new SecurityContext($app['security.authentication_manager'], $app['security.access_manager']);
@@ -131,7 +130,7 @@ class SecurityServiceProvider implements ServiceProviderInterface
                 $entryPoint = 'form';
             }
 
-            $app['security.authentication_listener.factory.'.$type] = $app->protect(function($name, $options) use ($type, $app, $entryPoint) {
+            $app['security.authentication_listener.factory.'.$type] = $app->protect(function ($name, $options) use ($type, $app, $entryPoint) {
                 if ($entryPoint && !isset($app['security.entry_point.'.$name.'.'.$entryPoint])) {
                     $app['security.entry_point.'.$name.'.'.$entryPoint] = $app['security.entry_point.'.$entryPoint.'._proto']($name, $options);
                 }
@@ -511,7 +510,8 @@ class SecurityServiceProvider implements ServiceProviderInterface
                     $app['security.user_provider.'.$name],
                     $app['security.user_checker'],
                     $name,
-                    $app['security.encoder_factory']
+                    $app['security.encoder_factory'],
+                    $app['security.hide_user_not_found']
                 );
             });
         });
@@ -524,13 +524,7 @@ class SecurityServiceProvider implements ServiceProviderInterface
 
         if (isset($app['validator'])) {
             $app['security.validator.user_password_validator'] = $app->share(function ($app) {
-                // FIXME: in Symfony 2.2 Symfony\Component\Security\Core\Validator\Constraint
-                // is replaced by Symfony\Component\Security\Core\Validator\Constraints
-                if (class_exists('Symfony\Component\Security\Core\Validator\Constraints\UserPasswordValidator')) {
-                    return new UserPasswordValidator($app['security'], $app['security.encoder_factory']);
-                }
-
-                return new DeprecatedUserPasswordValidator($app['security'], $app['security.encoder_factory']);
+                return new UserPasswordValidator($app['security'], $app['security.encoder_factory']);
             });
 
             if (!isset($app['validator.validator_service_ids'])) {
@@ -543,14 +537,12 @@ class SecurityServiceProvider implements ServiceProviderInterface
 
     public function boot(Application $app)
     {
-        // FIXME: in Symfony 2.2, this is a proper subscriber
-        //$app['dispatcher']->addSubscriber($app['security.firewall']);
-        $app['dispatcher']->addListener('kernel.request', array($app['security.firewall'], 'onKernelRequest'), 8);
+        $app['dispatcher']->addSubscriber($app['security.firewall']);
 
         foreach ($this->fakeRoutes as $route) {
             list($method, $pattern, $name) = $route;
 
-            $app->$method($pattern, function() {})->bind($name);
+            $app->$method($pattern)->run(null)->bind($name);
         }
     }
 

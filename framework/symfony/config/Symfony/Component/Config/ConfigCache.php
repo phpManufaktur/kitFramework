@@ -12,6 +12,8 @@
 namespace Symfony\Component\Config;
 
 use Symfony\Component\Config\Resource\ResourceInterface;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * ConfigCache manages PHP cache files.
@@ -30,12 +32,12 @@ class ConfigCache
      * Constructor.
      *
      * @param string  $file  The absolute cache path
-     * @param Boolean $debug Whether debugging is enabled or not
+     * @param bool    $debug Whether debugging is enabled or not
      */
     public function __construct($file, $debug)
     {
         $this->file = $file;
-        $this->debug = (Boolean) $debug;
+        $this->debug = (bool) $debug;
     }
 
     /**
@@ -54,7 +56,7 @@ class ConfigCache
      * This method always returns true when debug is off and the
      * cache file exists.
      *
-     * @return Boolean true if the cache is fresh, false otherwise
+     * @return bool    true if the cache is fresh, false otherwise
      */
     public function isFresh()
     {
@@ -66,7 +68,7 @@ class ConfigCache
             return true;
         }
 
-        $metadata = $this->file.'.meta';
+        $metadata = $this->getMetaFile();
         if (!is_file($metadata)) {
             return false;
         }
@@ -92,28 +94,34 @@ class ConfigCache
      */
     public function write($content, array $metadata = null)
     {
-        $dir = dirname($this->file);
-        if (!is_dir($dir)) {
-            if (false === @mkdir($dir, 0777, true)) {
-                throw new \RuntimeException(sprintf('Unable to create the %s directory', $dir));
-            }
-        } elseif (!is_writable($dir)) {
-            throw new \RuntimeException(sprintf('Unable to write in the %s directory', $dir));
-        }
-
-        $tmpFile = tempnam($dir, basename($this->file));
-        if (false !== @file_put_contents($tmpFile, $content) && @rename($tmpFile, $this->file)) {
-            @chmod($this->file, 0666 & ~umask());
-        } else {
-            throw new \RuntimeException(sprintf('Failed to write cache file "%s".', $this->file));
+        $mode = 0666;
+        $umask = umask();
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile($this->file, $content, null);
+        try {
+            $filesystem->chmod($this->file, $mode, $umask);
+        } catch (IOException $e) {
+            // discard chmod failure (some filesystem may not support it)
         }
 
         if (null !== $metadata && true === $this->debug) {
-            $file = $this->file.'.meta';
-            $tmpFile = tempnam($dir, basename($file));
-            if (false !== @file_put_contents($tmpFile, serialize($metadata)) && @rename($tmpFile, $file)) {
-                @chmod($file, 0666 & ~umask());
+            $filesystem->dumpFile($this->getMetaFile(), serialize($metadata), null);
+            try {
+                $filesystem->chmod($this->getMetaFile(), $mode, $umask);
+            } catch (IOException $e) {
+                // discard chmod failure (some filesystem may not support it)
             }
         }
     }
+
+    /**
+     * Gets the meta file path.
+     *
+     * @return string The meta file path
+     */
+    private function getMetaFile()
+    {
+        return $this->file.'.meta';
+    }
+
 }

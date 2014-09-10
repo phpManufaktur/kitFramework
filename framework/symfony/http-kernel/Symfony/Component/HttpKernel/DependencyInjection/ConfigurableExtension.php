@@ -28,11 +28,11 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 abstract class ConfigurableExtension extends Extension
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     final public function load(array $configs, ContainerBuilder $container)
     {
-        $this->loadInternal($this->processConfiguration($this->getConfiguration(array(), $container), $configs), $container);
+        $this->loadInternal($this->processConfiguration($this->getConfiguration($configs, $container), $configs), $container);
     }
 
     /**

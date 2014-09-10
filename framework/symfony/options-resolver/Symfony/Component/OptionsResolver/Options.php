@@ -52,7 +52,7 @@ class Options implements \ArrayAccess, \Iterator, \Countable
      * process. If any option is changed after being read, all evaluated
      * lazy options that depend on this option would become invalid.
      *
-     * @var Boolean
+     * @var bool
      */
     private $reading = false;
 
@@ -225,7 +225,7 @@ class Options implements \ArrayAccess, \Iterator, \Countable
         $this->reading = true;
 
         if (!array_key_exists($option, $this->options)) {
-            throw new \OutOfBoundsException('The option "' . $option . '" does not exist.');
+            throw new \OutOfBoundsException(sprintf('The option "%s" does not exist.', $option));
         }
 
         if (isset($this->lazy[$option])) {
@@ -244,7 +244,7 @@ class Options implements \ArrayAccess, \Iterator, \Countable
      *
      * @param string $option The option name.
      *
-     * @return Boolean Whether the option exists.
+     * @return bool    Whether the option exists.
      */
     public function has($option)
     {
@@ -324,7 +324,7 @@ class Options implements \ArrayAccess, \Iterator, \Countable
      *
      * @param string $option The option name.
      *
-     * @return Boolean Whether the option exists.
+     * @return bool    Whether the option exists.
      *
      * @see \ArrayAccess::offsetExists()
      */
@@ -459,7 +459,7 @@ class Options implements \ArrayAccess, \Iterator, \Countable
                 }
             }
 
-            throw new OptionDefinitionException('The options "' . implode('", "', $conflicts) . '" have a cyclic dependency.');
+            throw new OptionDefinitionException(sprintf('The options "%s" have a cyclic dependency.', implode('", "', $conflicts)));
         }
 
         $this->lock[$option] = true;
@@ -497,7 +497,7 @@ class Options implements \ArrayAccess, \Iterator, \Countable
                 }
             }
 
-            throw new OptionDefinitionException('The options "' . implode('", "', $conflicts) . '" have a cyclic dependency.');
+            throw new OptionDefinitionException(sprintf('The options "%s" have a cyclic dependency.', implode('", "', $conflicts)));
         }
 
         /** @var \Closure $normalizer */

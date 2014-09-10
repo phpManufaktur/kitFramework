@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Acl\Model;
 
+use Symfony\Component\Security\Acl\Exception\AclNotFoundException;
+
 /**
  * Provides a common interface for retrieving ACLs.
  *
@@ -22,7 +24,7 @@ interface AclProviderInterface
      * Retrieves all child object identities from the database
      *
      * @param ObjectIdentityInterface $parentOid
-     * @param Boolean                 $directChildrenOnly
+     * @param bool                    $directChildrenOnly
      *
      * @return array returns an array of child 'ObjectIdentity's
      */

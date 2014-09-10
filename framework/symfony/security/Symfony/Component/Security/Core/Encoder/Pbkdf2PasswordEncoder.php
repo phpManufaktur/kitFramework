@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Core\Encoder;
 
+use Symfony\Component\Security\Core\Exception\BadCredentialsException;
+
 /**
  * Pbkdf2PasswordEncoder uses the PBKDF2 (Password-Based Key Derivation Function 2).
  *
@@ -35,9 +37,9 @@ class Pbkdf2PasswordEncoder extends BasePasswordEncoder
      * Constructor.
      *
      * @param string  $algorithm          The digest algorithm to use
-     * @param Boolean $encodeHashAsBase64 Whether to base64 encode the password hash
-     * @param integer $iterations         The number of iterations to use to stretch the password hash
-     * @param integer $length             Length of derived key to create
+     * @param bool    $encodeHashAsBase64 Whether to base64 encode the password hash
+     * @param int     $iterations         The number of iterations to use to stretch the password hash
+     * @param int     $length             Length of derived key to create
      */
     public function __construct($algorithm = 'sha512', $encodeHashAsBase64 = true, $iterations = 1000, $length = 40)
     {
@@ -54,6 +56,10 @@ class Pbkdf2PasswordEncoder extends BasePasswordEncoder
      */
     public function encodePassword($raw, $salt)
     {
+        if ($this->isPasswordTooLong($raw)) {
+            throw new BadCredentialsException('Invalid password.');
+        }
+
         if (!in_array($this->algorithm, hash_algos(), true)) {
             throw new \LogicException(sprintf('The algorithm "%s" is not supported.', $this->algorithm));
         }
@@ -72,7 +78,7 @@ class Pbkdf2PasswordEncoder extends BasePasswordEncoder
      */
     public function isPasswordValid($encoded, $raw, $salt)
     {
-        return $this->comparePasswords($encoded, $this->encodePassword($raw, $salt));
+        return !$this->isPasswordTooLong($raw) && $this->comparePasswords($encoded, $this->encodePassword($raw, $salt));
     }
 
     private function hashPbkdf2($algorithm, $password, $salt, $iterations, $length = 0)
@@ -82,7 +88,7 @@ class Pbkdf2PasswordEncoder extends BasePasswordEncoder
         $digest = '';
 
         for ($i = 1; $i <= $blocks; $i++) {
-            $ib = $block = hash_hmac($algorithm, $salt . pack('N', $i), $password, true);
+            $ib = $block = hash_hmac($algorithm, $salt.pack('N', $i), $password, true);
 
             // Iterations
             for ($j = 1; $j < $iterations; $j++) {

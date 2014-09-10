@@ -24,11 +24,11 @@ abstract class BaseNode implements NodeInterface
 {
     protected $name;
     protected $parent;
-    protected $normalizationClosures;
-    protected $finalValidationClosures;
-    protected $allowOverwrite;
-    protected $required;
-    protected $equivalentValues;
+    protected $normalizationClosures = array();
+    protected $finalValidationClosures = array();
+    protected $allowOverwrite = true;
+    protected $required = false;
+    protected $equivalentValues = array();
     protected $attributes = array();
 
     /**
@@ -47,11 +47,6 @@ abstract class BaseNode implements NodeInterface
 
         $this->name = $name;
         $this->parent = $parent;
-        $this->normalizationClosures = array();
-        $this->finalValidationClosures = array();
-        $this->allowOverwrite = true;
-        $this->required = false;
-        $this->equivalentValues = array();
     }
 
     public function setAttribute($key, $value)
@@ -138,21 +133,21 @@ abstract class BaseNode implements NodeInterface
     /**
      * Set this node as required.
      *
-     * @param Boolean $boolean Required node
+     * @param bool    $boolean Required node
      */
     public function setRequired($boolean)
     {
-        $this->required = (Boolean) $boolean;
+        $this->required = (bool) $boolean;
     }
 
     /**
      * Sets if this node can be overridden.
      *
-     * @param Boolean $allow
+     * @param bool    $allow
      */
     public function setAllowOverwrite($allow)
     {
-        $this->allowOverwrite = (Boolean) $allow;
+        $this->allowOverwrite = (bool) $allow;
     }
 
     /**
@@ -178,7 +173,7 @@ abstract class BaseNode implements NodeInterface
     /**
      * Checks if this node is required.
      *
-     * @return Boolean
+     * @return bool
      */
     public function isRequired()
     {
@@ -281,12 +276,23 @@ abstract class BaseNode implements NodeInterface
     }
 
     /**
+     * Returns parent node for this node.
+     *
+     * @return NodeInterface|null
+     */
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    /**
      * Finalizes a value, applying all finalization closures.
      *
      * @param mixed $value The value to finalize
      *
      * @return mixed The finalized value
      *
+     * @throws Exception
      * @throws InvalidConfigurationException
      */
     final public function finalize($value)

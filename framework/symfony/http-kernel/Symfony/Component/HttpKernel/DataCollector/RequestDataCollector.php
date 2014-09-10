@@ -48,13 +48,20 @@ class RequestDataCollector extends DataCollector implements EventSubscriberInter
             $responseHeaders['Set-Cookie'] = $cookies;
         }
 
+        // attributes are serialized and as they can be anything, they need to be converted to strings.
         $attributes = array();
         foreach ($request->attributes->all() as $key => $value) {
-            if ('_route' == $key && is_object($value)) {
-                $value = $value->getPath();
+            if ('_route' === $key && is_object($value)) {
+                $attributes[$key] = $this->varToString($value->getPath());
+            } elseif ('_route_params' === $key) {
+                // we need to keep route params as an array (see getRouteParams())
+                foreach ($value as $k => $v) {
+                    $value[$k] = $this->varToString($v);
+                }
+                $attributes[$key] = $value;
+            } else {
+                $attributes[$key] = $this->varToString($value);
             }
-
-            $attributes[$key] = $this->varToString($value);
         }
 
         $content = null;
@@ -79,11 +86,14 @@ class RequestDataCollector extends DataCollector implements EventSubscriberInter
             }
         }
 
+        $statusCode = $response->getStatusCode();
+
         $this->data = array(
             'format'             => $request->getRequestFormat(),
             'content'            => $content,
             'content_type'       => $response->headers->get('Content-Type') ? $response->headers->get('Content-Type') : 'text/html',
-            'status_code'        => $response->getStatusCode(),
+            'status_text'        => isset(Response::$statusTexts[$statusCode]) ? Response::$statusTexts[$statusCode] : '',
+            'status_code'        => $statusCode,
             'request_query'      => $request->query->all(),
             'request_request'    => $request->request->all(),
             'request_headers'    => $request->headers->all(),
@@ -130,7 +140,13 @@ class RequestDataCollector extends DataCollector implements EventSubscriberInter
                     }
                 }
             } elseif ($controller instanceof \Closure) {
-                $this->data['controller'] = 'Closure';
+                $r = new \ReflectionFunction($controller);
+                $this->data['controller'] = array(
+                    'class'  => $r->getName(),
+                    'method' => null,
+                    'file'   => $r->getFilename(),
+                    'line'   => $r->getStartLine(),
+                );
             } else {
                 $this->data['controller'] = (string) $controller ?: 'n/a';
             }
@@ -201,6 +217,11 @@ class RequestDataCollector extends DataCollector implements EventSubscriberInter
     public function getContentType()
     {
         return $this->data['content_type'];
+    }
+
+    public function getStatusText()
+    {
+        return $this->data['status_text'];
     }
 
     public function getStatusCode()
@@ -280,13 +301,14 @@ class RequestDataCollector extends DataCollector implements EventSubscriberInter
             } elseif ($expires instanceof \DateTime) {
                 $expires = $expires->getTimestamp();
             } else {
-                $expires = strtotime($expires);
-                if (false === $expires || -1 == $expires) {
-                    throw new \InvalidArgumentException(sprintf('The "expires" cookie parameter is not valid.', $expires));
+                $tmp = strtotime($expires);
+                if (false === $tmp || -1 == $tmp) {
+                    throw new \InvalidArgumentException(sprintf('The "expires" cookie parameter is not valid (%s).', $expires));
                 }
+                $expires = $tmp;
             }
 
-            $cookie .= '; expires='.substr(\DateTime::createFromFormat('U', $expires, new \DateTimeZone('UTC'))->format('D, d-M-Y H:i:s T'), 0, -5);
+            $cookie .= '; expires='.str_replace('+0000', '', \DateTime::createFromFormat('U', $expires, new \DateTimeZone('GMT'))->format('D, d-M-Y H:i:s T'));
         }
 
         if ($domain) {

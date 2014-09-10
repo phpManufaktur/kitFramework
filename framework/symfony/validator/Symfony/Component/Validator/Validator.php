@@ -11,17 +11,20 @@
 
 namespace Symfony\Component\Validator;
 
+use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Validator\Exception\ValidatorException;
-use Symfony\Component\Translation\TranslatorInterface;
 
 /**
  * Default implementation of {@link ValidatorInterface}.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @deprecated Deprecated since version 2.5, to be removed in Symfony 3.0.
+ *             Use {@link Validator\RecursiveValidator} instead.
  */
-class Validator implements ValidatorInterface
+class Validator implements ValidatorInterface, Mapping\Factory\MetadataFactoryInterface
 {
     /**
      * @var MetadataFactoryInterface
@@ -72,7 +75,7 @@ class Validator implements ValidatorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getMetadataFor($value)
     {
@@ -80,21 +83,29 @@ class Validator implements ValidatorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
+     */
+    public function hasMetadataFor($value)
+    {
+        return $this->metadataFactory->hasMetadataFor($value);
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function validate($value, $groups = null, $traverse = false, $deep = false)
     {
         $visitor = $this->createVisitor($value);
 
         foreach ($this->resolveGroups($groups) as $group) {
-            $visitor->validate($value, $group, '');
+            $visitor->validate($value, $group, '', $traverse, $deep);
         }
 
         return $visitor->getViolations();
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      *
      * @throws ValidatorException If the metadata for the value does not support properties.
      */
@@ -105,10 +116,10 @@ class Validator implements ValidatorInterface
 
         if (!$metadata instanceof PropertyMetadataContainerInterface) {
             $valueAsString = is_scalar($containingValue)
-                ? '"' . $containingValue . '"'
-                : 'the value of type ' . gettype($containingValue);
+                ? '"'.$containingValue.'"'
+                : 'the value of type '.gettype($containingValue);
 
-            throw new ValidatorException(sprintf('The metadata for ' . $valueAsString . ' does not support properties.'));
+            throw new ValidatorException(sprintf('The metadata for %s does not support properties.', $valueAsString));
         }
 
         foreach ($this->resolveGroups($groups) as $group) {
@@ -125,22 +136,26 @@ class Validator implements ValidatorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      *
      * @throws ValidatorException If the metadata for the value does not support properties.
      */
     public function validatePropertyValue($containingValue, $property, $value, $groups = null)
     {
-        $visitor = $this->createVisitor($containingValue);
+        $visitor = $this->createVisitor(is_object($containingValue) ? $containingValue : $value);
         $metadata = $this->metadataFactory->getMetadataFor($containingValue);
 
         if (!$metadata instanceof PropertyMetadataContainerInterface) {
             $valueAsString = is_scalar($containingValue)
-                ? '"' . $containingValue . '"'
-                : 'the value of type ' . gettype($containingValue);
+                ? '"'.$containingValue.'"'
+                : 'the value of type '.gettype($containingValue);
 
-            throw new ValidatorException(sprintf('The metadata for ' . $valueAsString . ' does not support properties.'));
+            throw new ValidatorException(sprintf('The metadata for '.$valueAsString.' does not support properties.'));
         }
+
+        // If $containingValue is passed as class name, take $value as root
+        // and start the traversal with an empty property path
+        $propertyPath = is_object($containingValue) ? $property : '';
 
         foreach ($this->resolveGroups($groups) as $group) {
             if (!$metadata->hasPropertyMetadata($property)) {
@@ -148,7 +163,7 @@ class Validator implements ValidatorInterface
             }
 
             foreach ($metadata->getPropertyMetadata($property) as $propMeta) {
-                $propMeta->accept($visitor, $value, $group, $property);
+                $propMeta->accept($visitor, $value, $group, $propertyPath);
             }
         }
 
@@ -156,11 +171,11 @@ class Validator implements ValidatorInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function validateValue($value, $constraints, $groups = null)
     {
-        $context = new ExecutionContext($this->createVisitor(null), $this->translator, $this->translationDomain);
+        $context = new ExecutionContext($this->createVisitor($value), $this->translator, $this->translationDomain);
 
         $constraints = is_array($constraints) ? $constraints : array($constraints);
 
@@ -186,7 +201,7 @@ class Validator implements ValidatorInterface
                 );
             }
 
-            $context->validateValue($value, $constraint, $groups);
+            $context->validateValue($value, $constraint, '', $groups);
         }
 
         return $context->getViolations();

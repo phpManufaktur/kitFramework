@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+2.5.0
+-----
+
+ * added relative file path template to the file dumpers
+ * added optional backup to the file dumpers
+ * changed IcuResFileDumper to extend FileDumper
+
+2.3.0
+-----
+
+ * added classes to make operations on catalogues (like making a diff or a merge on 2 catalogues)
+ * added Translator::getFallbackLocales()
+ * deprecated Translator::setFallbackLocale() in favor of the new Translator::setFallbackLocales() method
+
 2.2.0
 -----
 

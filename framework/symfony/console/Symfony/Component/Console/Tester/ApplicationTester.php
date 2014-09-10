@@ -32,6 +32,7 @@ class ApplicationTester
     private $application;
     private $input;
     private $output;
+    private $statusCode;
 
     /**
      * Constructor.
@@ -55,7 +56,7 @@ class ApplicationTester
      * @param array $input   An array of arguments and options
      * @param array $options An array of options
      *
-     * @return integer The command exit code
+     * @return int     The command exit code
      */
     public function run(array $input, $options = array())
     {
@@ -72,19 +73,27 @@ class ApplicationTester
             $this->output->setVerbosity($options['verbosity']);
         }
 
-        return $this->application->run($this->input, $this->output);
+        return $this->statusCode = $this->application->run($this->input, $this->output);
     }
 
     /**
      * Gets the display returned by the last execution of the application.
      *
+     * @param bool    $normalize Whether to normalize end of lines to \n or not
+     *
      * @return string The display
      */
-    public function getDisplay()
+    public function getDisplay($normalize = false)
     {
         rewind($this->output->getStream());
 
-        return stream_get_contents($this->output->getStream());
+        $display = stream_get_contents($this->output->getStream());
+
+        if ($normalize) {
+            $display = str_replace(PHP_EOL, "\n", $display);
+        }
+
+        return $display;
     }
 
     /**
@@ -105,5 +114,15 @@ class ApplicationTester
     public function getOutput()
     {
         return $this->output;
+    }
+
+    /**
+     * Gets the status code returned by the last execution of the application.
+     *
+     * @return int     The status code
+     */
+    public function getStatusCode()
+    {
+        return $this->statusCode;
     }
 }

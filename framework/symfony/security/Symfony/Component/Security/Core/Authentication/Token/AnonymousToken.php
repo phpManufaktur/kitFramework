@@ -11,12 +11,13 @@
 
 namespace Symfony\Component\Security\Core\Authentication\Token;
 
+use Symfony\Component\Security\Core\Role\RoleInterface;
+
 /**
  * AnonymousToken represents an anonymous token.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-
 class AnonymousToken extends AbstractToken
 {
     private $key;
@@ -56,7 +57,7 @@ class AnonymousToken extends AbstractToken
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function serialize()
     {
@@ -64,7 +65,7 @@ class AnonymousToken extends AbstractToken
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function unserialize($serialized)
     {

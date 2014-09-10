@@ -13,6 +13,7 @@ namespace Symfony\Component\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
+use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
@@ -20,17 +21,21 @@ use Symfony\Component\Validator\ConstraintValidator;
 class RangeValidator extends ConstraintValidator
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function validate($value, Constraint $constraint)
     {
+        if (!$constraint instanceof Range) {
+            throw new UnexpectedTypeException($constraint, __NAMESPACE__.'\Range');
+        }
+
         if (null === $value) {
             return;
         }
 
         if (!is_numeric($value)) {
             $this->context->addViolation($constraint->invalidMessage, array(
-                '{{ value }}' => $value,
+                '{{ value }}' => $this->formatValue($value),
             ));
 
             return;
